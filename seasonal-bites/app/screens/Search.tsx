@@ -36,6 +36,7 @@ const TileSelector: React.FC = () => {
 
   return (
     <View style={styles.container}>
+        <Text style={styles.header}>Search</Text>
       <FlatList
         data={tileOptions}                  // Gets data from tileOptions
         keyExtractor={(item) => item.id}    // Gets id from each 'Tile'
@@ -62,6 +63,13 @@ const TileSelector: React.FC = () => {
 // stylesheets
 
 const styles = StyleSheet.create({
+    header: {
+        fontSize: 24,
+        fontWeight: "bold",
+        textAlign: "center",
+        marginBottom: 20,
+        color: "#333",
+      },      
   container: {
     padding: 20,
     alignItems: "center",
