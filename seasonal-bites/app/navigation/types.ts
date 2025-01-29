@@ -1,6 +1,6 @@
 export type RootStackParamList = {
     Menu: undefined;
-    TileSelector: undefined;
+    Search: undefined;
     CreateAccount: undefined;
     Login: undefined;
 };
