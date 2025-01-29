@@ -8,15 +8,24 @@ const Main: React.FC = () => {
             <Text style={styles.subtitle}>Discover what’s fresh and in season!</Text>
 
             <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={() => {}}>
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => {}}
+                >
                     <Text style={styles.buttonText}>Explore</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.button} onPress={() => {}}>
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => {}}
+                >
                     <Text style={styles.buttonText}>Favorites</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.button, styles.logoutButton]} onPress={() => {}}>
+                <TouchableOpacity
+                    style={[styles.button, styles.logoutButton]}
+                    onPress={() => {}}
+                >
                     <Text style={styles.buttonText}>Sign Out</Text>
                 </TouchableOpacity>
             </View>
@@ -54,12 +63,12 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         paddingVertical: 12,
         paddingHorizontal: 40,
-        marginVertical: 5, // Closer spacing between buttons
-        width: '80%', // Ensures consistent button width
+        marginVertical: 5,
+        width: '80%',
         alignItems: 'center',
     },
     logoutButton: {
-        backgroundColor: '#d9534f', // Red color for logout
+        backgroundColor: '#d9534f',
     },
     buttonText: {
         color: 'white',
