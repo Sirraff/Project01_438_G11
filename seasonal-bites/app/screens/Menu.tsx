@@ -1,20 +1,41 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/types';
+import { FIREBASE_AUTH } from '../../FirebaseConfig';
+import { signOut } from 'firebase/auth';
+
+type MenuScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Menu'>;
 
 const Menu: React.FC = () => {
+    const navigation = useNavigation<MenuScreenNavigationProp>();
+
+    // Function to handle user logout
+    const logout = async () => {
+        try {
+            await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+            navigation.navigate('Login');   // Redirects to Login screen
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Seasonal Bites</Text>
             <Text style={styles.subtitle}>Discover what’s fresh and in season!</Text>
 
             <View style={styles.buttonContainer}>
+                {/* Button to navigate to the search screen */}
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={() => {}}
+                    onPress={() => navigation.navigate('TileSelector')}
                 >
-                    <Text style={styles.buttonText}>Explore</Text>
+                    <Text style={styles.buttonText}>Search</Text>
                 </TouchableOpacity>
 
+                {/* Placeholder button for Favorites screen */}
                 <TouchableOpacity
                     style={styles.button}
                     onPress={() => {}}
@@ -22,9 +43,10 @@ const Menu: React.FC = () => {
                     <Text style={styles.buttonText}>Favorites</Text>
                 </TouchableOpacity>
 
+                {/* Logout button to sign out the user */}
                 <TouchableOpacity
                     style={[styles.button, styles.logoutButton]}
-                    onPress={() => {}}
+                    onPress={logout}
                 >
                     <Text style={styles.buttonText}>Sign Out</Text>
                 </TouchableOpacity>
