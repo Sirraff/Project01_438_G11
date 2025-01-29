@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-const Main: React.FC = () => {
+const Menu: React.FC = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Seasonal Bites</Text>
@@ -77,4 +77,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Main;
+export default Menu;
