@@ -19,3 +19,5 @@ Seasonal Bites is a simple React Native app that helps users track their favorit
 - **State Management**: React Context API (or Redux if needed)  
 - **Local Storage**: AsyncStorage or SecureStore (for user preferences and tracked fruits)  
 
+Diagram
+[Draw.io](https://app.diagrams.net/#G1VRTGoQJ_wXiPGqTAo7HxVw_2cpEh5BMh#%7B"pageId"%3A"jBG1kDsqEUNYBChL9mqB"%7D)
