@@ -22,7 +22,7 @@ const Login = () => {
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
             console.log(response);
-            navigation.navigate('Menu');
+            navigation.navigate('Menu');    // Redirects to Menu screen
         } catch (error) {
             console.log(error);
             setError(error.message);
@@ -64,6 +64,11 @@ const Login = () => {
                     <Text style={styles.buttonText}>
                         {loading ? 'Loading...' : 'Login'}
                     </Text>
+                </TouchableOpacity>
+
+                {/* Links user to Create Account page */}
+                <TouchableOpacity onPress={() => navigation.navigate('CreateAccount')}>
+                    <Text style={styles.footerText}>Don’t have an account? Sign up here.</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -127,6 +132,12 @@ const styles = StyleSheet.create({
         color: 'red',
         marginBottom: 15,
         textAlign: 'center',
+    },
+    footerText: {
+        color: '#2d936c',
+        fontSize: 14,
+        textAlign: 'center',
+        marginTop: 15,
     },
 });
 
