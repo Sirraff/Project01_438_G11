@@ -2,6 +2,11 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import React, { useState } from 'react'
 import { FIREBASE_AUTH } from '../../FirebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/types';
+
+type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -10,12 +15,14 @@ const Login = () => {
     const [error, setError] = useState('');
 
     const auth = FIREBASE_AUTH;
+    const navigation = useNavigation<LoginScreenNavigationProp>();
 
     const signIn = async () => {
         setLoading(true);
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
             console.log(response);
+            navigation.navigate('Menu');
         } catch (error) {
             console.log(error);
             setError(error.message);
