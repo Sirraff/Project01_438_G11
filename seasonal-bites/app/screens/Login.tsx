@@ -1,11 +1,12 @@
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+// app/screens/Login.tsx
 import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { auth } from '../../FirebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-// Define param list type (or import it if you've defined it elsewhere)
+// Define the navigation parameter types.
 type RootStackParamList = {
   Login: undefined;
   CreateAccount: undefined;
@@ -18,7 +19,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Type your navigation object with the param list type
+  // Type your navigation object.
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const signIn = async () => {
@@ -26,11 +27,9 @@ const Login = () => {
     try {
       const response = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login successful:', response);
-
-      // Navigate to the Menu screen after a successful login
       navigation.navigate('Menu');
     } catch (error: any) {
-      console.log(error);
+      console.error(error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -56,7 +55,7 @@ const Login = () => {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          secureTextEntry={true}
+          secureTextEntry
           autoComplete="password"
           value={password}
           onChangeText={setPassword}

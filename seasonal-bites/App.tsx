@@ -1,7 +1,7 @@
-import { NavigationContainer } from '@react-navigation/native';  // Correct import for NavigationContainer
+// App.tsx (located in your project root)
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
 import Login from './app/screens/Login';
 import CreateAccount from './app/screens/CreateAccount';
 import Menu from './app/screens/Menu';
@@ -15,17 +15,18 @@ export default function App() {
         <Stack.Screen
           name="Login"
           component={Login}
-          options={{ headerShown: false }}  // Hides the header for the login screen
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="CreateAccount"
           component={CreateAccount}
-          options={{ headerShown: false }}  // Hides the header for the create account screen
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Menu"
           component={Menu}
-          options={{ headerShown: false }}  // Hides the header for the menu screen
+          // Enable the header for Menu so the logout button appears.
+          options={{ headerShown: true }}
         />
       </Stack.Navigator>
     </NavigationContainer>
