@@ -1,3 +1,4 @@
+// app/screens/Login.tsx
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import React, { useState } from 'react'
 import { FIREBASE_AUTH } from '../../FirebaseConfig';
@@ -9,11 +10,12 @@ import { RootStackParamList } from '../navigation/types';
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
 const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
+    // Type your navigation object.
     const auth = FIREBASE_AUTH;
     const navigation = useNavigation<LoginScreenNavigationProp>();
 
@@ -21,7 +23,7 @@ const Login = () => {
         setLoading(true);
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
-            console.log(response);
+            console.log('Login successful:', response);
             navigation.navigate('Menu');    // Redirects to Menu screen
         } catch (error) {
             console.log(error);
@@ -31,30 +33,30 @@ const Login = () => {
         }
     }
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Seasonal Bites</Text>
-            <Text style={styles.subtitle}>Fresh Flavors, Every Season</Text>
-            
-            <View style={styles.formContainer}>
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
-                
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    autoCapitalize="none"
-                    autoComplete="email"
-                    value={email}
-                    onChangeText={(text) => setEmail(text)}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Password"
-                    secureTextEntry={true}
-                    autoComplete="password"
-                    value={password}
-                    onChangeText={(text) => setPassword(text)}
-                />
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Seasonal Bites</Text>
+      <Text style={styles.subtitle}>Fresh Flavors, Every Season</Text>
+
+      <View style={styles.formContainer}>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          autoCapitalize="none"
+          autoComplete="email"
+          value={email}
+          onChangeText={setEmail}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          secureTextEntry
+          autoComplete="password"
+          value={password}
+          onChangeText={setPassword}
+        />
 
                 <TouchableOpacity 
                     style={[styles.button, loading && styles.disabledButton]}
