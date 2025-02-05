@@ -32,7 +32,7 @@ export default function App() {
          <Stack.Screen
            name='Search'
            component={Search}
-           options={{ headerShown: false }} />
+           options={{ headerShown: true }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

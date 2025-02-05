@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { View, Button, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types"; // Import the type from App.tsx
 import { collection, getDocs } from "firebase/firestore";
 import { FIRESTORE_DB } from "../../FirebaseConfig"; // Import Firestore instance
-
+import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import { signOut } from 'firebase/auth';
 
 // Define an interface for Firestore items
 interface ProduceItem {
@@ -17,7 +18,7 @@ interface ProduceItem {
 
 const Search: React.FC = () => {
   const [produce, setProduce] = useState<ProduceItem[]>([]); // Firestore data
-  const [selectedTile, setSelectedTile] = useState<string | null>(null); // Selected tile state
+  const [selectedTiles, setSelectedTiles] = useState<string[]>([]); // Multi-select state
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   // Fetch data from Firestore
@@ -47,27 +48,60 @@ const Search: React.FC = () => {
     fetchData();
   }, []);
 
+  // Toggle selection of tiles
+  const toggleSelection = (id: string) => {
+    setSelectedTiles((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((tileId) => tileId !== id) // Remove if already selected
+        : [...prevSelected, id] // Add if not selected
+    );
+  };
+
+  // Function to handle user logout
+  const handleLogout = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+      navigation.navigate('Login');   // Redirects to Login screen
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+
+  // Set the header's logout button. We can prob modularize it but meh...
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+      ),
+    });
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Search</Text>
 
       {/* Render Firestore Data in FlatList */}
       <FlatList
-        data={produce} // Use Firestore data instead of tileOptions
+        data={produce}
         keyExtractor={(item) => item.id}
         numColumns={4}
+        contentContainerStyle={styles.listContent} // Ensures proper scrolling
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
               styles.tile,
-              selectedTile === item.id && styles.selectedTile,
+              selectedTiles.includes(item.id) && styles.selectedTile,
             ]}
-            onPress={() => setSelectedTile(item.id)}
+            onPress={() => toggleSelection(item.id)}
           >
             {/* Display Image if Available */}
             {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
-            
-            <Text style={[styles.tileText, selectedTile === item.id && styles.selectedText]}>
+
+            <Text style={[
+              styles.tileText,
+              selectedTiles.includes(item.id) && styles.selectedText
+            ]}
+            >
               {item.name || "Unnamed Item"}
             </Text>
           </TouchableOpacity>
@@ -82,19 +116,21 @@ const Search: React.FC = () => {
   );
 };
 
-// stylesheets
-
+// Stylesheets
 const styles = StyleSheet.create({
-    header: {
-        fontSize: 24,
-        fontWeight: "bold",
-        textAlign: "center",
-        marginBottom: 20,
-        color: "#333",
-      },      
   container: {
-    flex: 1,
+    flex: 1, // Ensures scrollability
     padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#333",
+  },
+  listContent: {
     alignItems: "center",
   },
   tile: {
@@ -111,7 +147,7 @@ const styles = StyleSheet.create({
     borderColor: "#ffffff",
   },
   image: {
-    width: 60, 
+    width: 60,
     height: 60,
     marginBottom: 5,
     resizeMode: "contain",
@@ -130,12 +166,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     marginTop: 10,
-    },
+  },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
-    },
+  },
 });
 
 export default Search;
