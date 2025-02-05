@@ -1,52 +1,61 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/types';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/types"; // Import the type from App.tsx
+import { collection, getDocs } from "firebase/firestore";
+import { FIRESTORE_DB } from "../../FirebaseConfig"; // Import Firestore instance
 
-type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList, "Search">;
 
-// PNG for tiles
-const amaranthImage = require("../../assets/testImages/amaranth_144x144.png");
-const beetImage = require("../../assets/testImages/beet_144x144.png");
-const arugulaImage = require("../../assets/testImages/arugula_144x144.png");
-const asianPearImage = require("../../assets/testImages/asian_pear_144x144.png");
-const bokImage = require("../../assets/testImages/bok_choy_144x144.png");
-const brocImage = require("../../assets/testImages/broccoli_144x144.png");
-const rabeImage = require("../../assets/testImages/broccoli_rabe_144x144.png");
-const cabbageImage = require("../../assets/testImages/cabbage_144x144.png");
-
-// Fields for tiles
-interface Tile {
+// Define an interface for Firestore items
+interface ProduceItem {
   id: string;
-  label: string;
-  image: any;
+  name?: string;
+  description?: string;
+  imageurl?: string;
 }
 
-// Hardcoded tiles and fields
-const tileOptions: Tile[] = [
-  { id: "1", label: "Amaranth", image: amaranthImage },
-  { id: "2", label: "Arugula", image: arugulaImage },
-  { id: "3", label: "Asian Pears", image: asianPearImage },
-  { id: "4", label: "Beets", image: beetImage },
-  { id: "5", label: "Bok Choy", image: bokImage },
-  { id: "6", label: "Broccoli", image: brocImage },
-  { id: "7", label: "Broccoli Rabe", image: rabeImage },
-  { id: "8", label: "Cabbage", image: cabbageImage },
-];
+const Search: React.FC = () => {
+  const [produce, setProduce] = useState<ProduceItem[]>([]); // Firestore data
+  const [selectedTile, setSelectedTile] = useState<string | null>(null); // Selected tile state
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-// Tile and FlatList magic
-const TileSelector: React.FC = () => {
-  const [selectedTile, setSelectedTile] = useState<string | null>(null);
-  const navigation = useNavigation<SearchScreenNavigationProp>();
+  // Fetch data from Firestore
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log("Fetching data from Firestore...");
+        const produceRef = collection(FIRESTORE_DB, "Produce");
+        const snapshot = await getDocs(produceRef);
 
-    return (
+        if (snapshot.empty) {
+          console.warn("No documents found in Firestore.");
+        }
+
+        const produceList: ProduceItem[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log("Fetched Data:", produceList);
+        setProduce(produceList);
+      } catch (error) {
+        console.error("Error fetching produce:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
     <View style={styles.container}>
-        <Text style={styles.header}>Search</Text>
+      <Text style={styles.header}>Search</Text>
+
+      {/* Render Firestore Data in FlatList */}
       <FlatList
-        data={tileOptions}                  // Gets data from tileOptions
-        keyExtractor={(item) => item.id}    // Gets id from each 'Tile'
-        numColumns={4}                      // Number of columns per row
+        data={produce} // Use Firestore data instead of tileOptions
+        keyExtractor={(item) => item.id}
+        numColumns={4}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[
@@ -55,18 +64,22 @@ const TileSelector: React.FC = () => {
             ]}
             onPress={() => setSelectedTile(item.id)}
           >
-            <Image source={item.image} style={styles.image} />
+            {/* Display Image if Available */}
+            {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
+            
             <Text style={[styles.tileText, selectedTile === item.id && styles.selectedText]}>
-              {item.label}
+              {item.name || "Unnamed Item"}
             </Text>
           </TouchableOpacity>
         )}
       />
+
+      {/* Navigation Button */}
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Menu")}>
         <Text style={styles.buttonText}>Return to Menu</Text>
       </TouchableOpacity>
     </View>
-    );
+  );
 };
 
 // stylesheets
@@ -124,4 +137,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default TileSelector;
+export default Search;
