@@ -1,5 +1,10 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/types';
+
+type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList, "Search">;
 
 // PNG for tiles
 const amaranthImage = require("../../assets/testImages/amaranth_144x144.png");
@@ -33,8 +38,9 @@ const tileOptions: Tile[] = [
 // Tile and FlatList magic
 const TileSelector: React.FC = () => {
   const [selectedTile, setSelectedTile] = useState<string | null>(null);
+  const navigation = useNavigation<SearchScreenNavigationProp>();
 
-  return (
+    return (
     <View style={styles.container}>
         <Text style={styles.header}>Search</Text>
       <FlatList
@@ -56,8 +62,11 @@ const TileSelector: React.FC = () => {
           </TouchableOpacity>
         )}
       />
+      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Menu")}>
+        <Text style={styles.buttonText}>Return to Menu</Text>
+      </TouchableOpacity>
     </View>
-  );
+    );
 };
 
 // stylesheets
@@ -101,6 +110,18 @@ const styles = StyleSheet.create({
   selectedText: {
     color: "#fff",
   },
+  button: {
+    backgroundColor: "#4CAF50",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+    marginTop: 10,
+    },
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "bold",
+    },
 });
 
 export default TileSelector;

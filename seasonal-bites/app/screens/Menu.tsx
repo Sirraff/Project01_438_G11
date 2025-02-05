@@ -1,61 +1,60 @@
 // app/screens/Menu.tsx
 import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Button } from 'react-native';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../FirebaseConfig';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/types';
+import { FIREBASE_AUTH } from '../../FirebaseConfig';
+import { signOut } from 'firebase/auth';
 
-// Define your navigation parameter types.
-type RootStackParamList = {
-  Login: undefined;
-  CreateAccount: undefined;
-  Menu: undefined;
-};
+type MenuScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Menu'>;
 
 const Menu: React.FC = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const navigation = useNavigation<MenuScreenNavigationProp>();
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      navigation.replace('Login');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+    // Function to handle user logout
+    const handleLogout = async () => {
+        try {
+            await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+            navigation.navigate('Login');   // Redirects to Login screen
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
+    };
 
-  // Set the header's logout button. We can prob modularize it but meh...
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Button title="Logout" onPress={handleLogout} color="#2d936c" />
-      ),
-    });
-  }, [navigation]);
+    // Set the header's logout button. We can prob modularize it but meh...
+    useEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+            ),
+        });
+    }, [navigation]);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Seasonal Bites</Text>
-      <Text style={styles.subtitle}>Discover what’s fresh and in season!</Text>
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Seasonal Bites</Text>
+            <Text style={styles.subtitle}>Discover what’s fresh and in season!</Text>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => {}}
-        >
-          <Text style={styles.buttonText}>Explore</Text>
-        </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+                {/* Button to navigate to the search screen */}
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => navigation.navigate('TileSelector')}
+                >
+                    <Text style={styles.buttonText}>Search</Text>
+                </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => {}}
-        >
-          <Text style={styles.buttonText}>Favorites</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+                {/* Placeholder button for Favorites screen */}
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => {}}
+                >
+                    <Text style={styles.buttonText}>Favorites</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
