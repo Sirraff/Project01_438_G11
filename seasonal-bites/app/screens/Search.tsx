@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Button, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { Animated, View, Button, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/types"; // Import the type from App.tsx
@@ -35,6 +35,9 @@ const Search: React.FC = () => {
 
   // Necessary for navigation
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  // used as animation reference
+  const slideAnim = useRef(new Animated.Value(100)).current;
 
   /**
    * Here is where we query our Firestore database.
@@ -80,6 +83,21 @@ const Search: React.FC = () => {
         // toggles on
         : [...prevSelected, id] 
     );
+  };
+
+  // button slide animation
+  useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: selectedTiles.length > 0 ? 0 : 100,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [selectedTiles]);
+
+  // clears selected tile array
+  // TODO: have this send info to local storage
+  const clearSelection = () =>{
+    setSelectedTiles([]);
   };
 
   // Function to handle user logout
@@ -140,10 +158,12 @@ const Search: React.FC = () => {
         )}
       />
 
-      {/* Navigation Button */}
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Menu")}>
-        <Text style={styles.buttonText}>Return to Menu</Text>
-      </TouchableOpacity>
+            {/* Sliding Button */}
+            <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
+        <TouchableOpacity style={styles.button} onPress={clearSelection}>
+          <Text style={styles.buttonText}>Clear Selection ({selectedTiles.length})</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
   );
 };
@@ -203,6 +223,12 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  selectionButton: {
+    position: "absolute",
+    bottom: 20,
+    width: "80%",
+    alignSelf: "center",
   },
 });
 
