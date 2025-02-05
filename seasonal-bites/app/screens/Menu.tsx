@@ -40,7 +40,7 @@ const Menu: React.FC = () => {
                 {/* Button to navigate to the search screen */}
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={() => navigation.navigate('TileSelector')}
+                    onPress={() => navigation.navigate('Search')}
                 >
                     <Text style={styles.buttonText}>Search</Text>
                 </TouchableOpacity>

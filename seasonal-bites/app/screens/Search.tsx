@@ -1,86 +1,188 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { Animated, View, Button, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../navigation/types';
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../navigation/types"; // Import the type from App.tsx
+import { collection, getDocs } from "firebase/firestore";
+import { FIRESTORE_DB } from "../../FirebaseConfig"; // Import Firestore instance
+import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import { signOut } from 'firebase/auth';
 
-type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList, "Search">;
-
-// PNG for tiles
-const amaranthImage = require("../../assets/testImages/amaranth_144x144.png");
-const beetImage = require("../../assets/testImages/beet_144x144.png");
-const arugulaImage = require("../../assets/testImages/arugula_144x144.png");
-const asianPearImage = require("../../assets/testImages/asian_pear_144x144.png");
-const bokImage = require("../../assets/testImages/bok_choy_144x144.png");
-const brocImage = require("../../assets/testImages/broccoli_144x144.png");
-const rabeImage = require("../../assets/testImages/broccoli_rabe_144x144.png");
-const cabbageImage = require("../../assets/testImages/cabbage_144x144.png");
-
-// Fields for tiles
-interface Tile {
+/**
+ * Defines an interface representative of items fetched from docs in Firestore
+ * @param id is the name of the produce as a collection name
+ * @param name is the name of the item as a string
+ * @param description is a stored string that describes the item
+ * @param imageurl is a url stored as a string pointing to an image 
+ */
+interface ProduceItem {
   id: string;
-  label: string;
-  image: any;
+  name?: string;
+  description?: string;
+  imageurl?: string;
 }
 
-// Hardcoded tiles and fields
-const tileOptions: Tile[] = [
-  { id: "1", label: "Amaranth", image: amaranthImage },
-  { id: "2", label: "Arugula", image: arugulaImage },
-  { id: "3", label: "Asian Pears", image: asianPearImage },
-  { id: "4", label: "Beets", image: beetImage },
-  { id: "5", label: "Bok Choy", image: bokImage },
-  { id: "6", label: "Broccoli", image: brocImage },
-  { id: "7", label: "Broccoli Rabe", image: rabeImage },
-  { id: "8", label: "Cabbage", image: cabbageImage },
-];
+const Search: React.FC = () => {
+  
+  // Creates array produce of type ProduceItem from setProduce
+  const [produce, setProduce] = useState<ProduceItem[]>([]);
 
-// Tile and FlatList magic
-const TileSelector: React.FC = () => {
-  const [selectedTile, setSelectedTile] = useState<string | null>(null);
-  const navigation = useNavigation<SearchScreenNavigationProp>();
+    /**
+   * Creates array selectedTiles of strings that tracks which tiles
+   * are currently selected.
+   */ 
+  const [selectedTiles, setSelectedTiles] = useState<string[]>([]);
 
-    return (
+  // Necessary for navigation
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  // used as animation reference
+  const slideAnim = useRef(new Animated.Value(100)).current;
+
+  /**
+   * Here is where we query our Firestore database.
+   * Currently, we directly call the full Produce collection
+   * and converts the collection into a ProduceItem[] array.
+   * This array then becomes the produce array above
+   * */
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log("Fetching data from Firestore...");
+        // query Produce collection
+        const produceRef = collection(FIRESTORE_DB, "Produce");
+        // gets docs from produce collection
+        const snapshot = await getDocs(produceRef);
+
+        if (snapshot.empty) {
+          console.warn("No documents found in Firestore.");
+        }
+        // creates array from docs
+        const produceList: ProduceItem[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        console.log("Fetched Data:", produceList);
+        // sets produce array to the array of fetched docs
+        setProduce(produceList);
+      } catch (error) {
+        console.error("Error fetching produce:", error);
+      }
+    };
+    // calls the above
+    fetchData();
+  }, []);
+
+  // Updates selectedTiles by adding/removing tile id's
+  const toggleSelection = (id: string) => {
+    setSelectedTiles((prevSelected) =>
+      prevSelected.includes(id)
+        // toggles off
+        ? prevSelected.filter((tileId) => tileId !== id)
+        // toggles on
+        : [...prevSelected, id] 
+    );
+  };
+
+  // button slide animation
+  useEffect(() => {
+    Animated.timing(slideAnim, {
+      toValue: selectedTiles.length > 0 ? 0 : 100,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [selectedTiles]);
+
+  // clears selected tile array
+  // TODO: have this send info to local storage
+  const clearSelection = () =>{
+    setSelectedTiles([]);
+  };
+
+  // Function to handle user logout
+  const handleLogout = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+      navigation.navigate('Login');   // Redirects to Login screen
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+
+  // Set the header's logout button. We can prob modularize it but meh...
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+      ),
+    });
+  }, [navigation]);
+
+  /**
+   * This section handles the creation of the FlatList
+   * and tiles in accordance to the information stored in
+   * produce. In essence, this builds the UI programmatically
+   */
+  return (
     <View style={styles.container}>
-        <Text style={styles.header}>Search</Text>
+      <Text style={styles.header}>Search</Text>
+
+      {/* Render Firestore Data in FlatList */}
       <FlatList
-        data={tileOptions}                  // Gets data from tileOptions
-        keyExtractor={(item) => item.id}    // Gets id from each 'Tile'
-        numColumns={4}                      // Number of columns per row
+        data={produce}
+        keyExtractor={(item) => item.id}
+        // change number of columns here
+        numColumns={4}
+        contentContainerStyle={styles.listContent} // Ensures proper scrolling
         renderItem={({ item }) => (
+          // allows for highlighting tiles
           <TouchableOpacity
             style={[
               styles.tile,
-              selectedTile === item.id && styles.selectedTile,
+              selectedTiles.includes(item.id) && styles.selectedTile,
             ]}
-            onPress={() => setSelectedTile(item.id)}
+            onPress={() => toggleSelection(item.id)}
           >
-            <Image source={item.image} style={styles.image} />
-            <Text style={[styles.tileText, selectedTile === item.id && styles.selectedText]}>
-              {item.label}
+            {/* Display Image if Available */}
+            {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
+
+            <Text style={[
+              styles.tileText,
+              selectedTiles.includes(item.id) && styles.selectedText
+            ]}
+            >
+              {item.name || "Unnamed Item"}
             </Text>
           </TouchableOpacity>
         )}
       />
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Menu")}>
-        <Text style={styles.buttonText}>Return to Menu</Text>
-      </TouchableOpacity>
+
+            {/* Sliding Button */}
+            <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
+        <TouchableOpacity style={styles.button} onPress={clearSelection}>
+          <Text style={styles.buttonText}>Clear Selection ({selectedTiles.length})</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </View>
-    );
+  );
 };
 
-// stylesheets
-
+// Stylesheets
 const styles = StyleSheet.create({
-    header: {
-        fontSize: 24,
-        fontWeight: "bold",
-        textAlign: "center",
-        marginBottom: 20,
-        color: "#333",
-      },      
   container: {
+    flex: 1, // Ensures scrollability
     padding: 20,
+    alignItems: "center",
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+    color: "#333",
+  },
+  listContent: {
     alignItems: "center",
   },
   tile: {
@@ -97,7 +199,7 @@ const styles = StyleSheet.create({
     borderColor: "#ffffff",
   },
   image: {
-    width: 60, 
+    width: 60,
     height: 60,
     marginBottom: 5,
     resizeMode: "contain",
@@ -116,12 +218,18 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: "center",
     marginTop: 10,
-    },
+  },
   buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "bold",
-    },
+  },
+  selectionButton: {
+    position: "absolute",
+    bottom: 20,
+    width: "80%",
+    alignSelf: "center",
+  },
 });
 
-export default TileSelector;
+export default Search;

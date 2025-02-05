@@ -5,7 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Login from './app/screens/Login';
 import CreateAccount from './app/screens/CreateAccount';
 import Menu from './app/screens/Menu';
-import TileSelector from "./app/screens/Search";
+import Search from "./app/screens/Search";
 
 const Stack = createNativeStackNavigator();
 
@@ -30,9 +30,9 @@ export default function App() {
           options={{ headerShown: true }}
         />
          <Stack.Screen
-           name='TileSelector'
-           component={TileSelector}
-           options={{ headerShown: false }} />
+           name='Search'
+           component={Search}
+           options={{ headerShown: true }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
