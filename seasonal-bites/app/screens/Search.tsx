@@ -8,7 +8,13 @@ import { FIRESTORE_DB } from "../../FirebaseConfig"; // Import Firestore instanc
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { signOut } from 'firebase/auth';
 
-// Define an interface for Firestore items
+/**
+ * Defines an interface representative of items fetched from docs in Firestore
+ * @param id is the name of the produce as a collection name
+ * @param name is the name of the item as a string
+ * @param description is a stored string that describes the item
+ * @param imageurl is a url stored as a string pointing to an image 
+ */
 interface ProduceItem {
   id: string;
   name?: string;
@@ -17,43 +23,62 @@ interface ProduceItem {
 }
 
 const Search: React.FC = () => {
-  const [produce, setProduce] = useState<ProduceItem[]>([]); // Firestore data
-  const [selectedTiles, setSelectedTiles] = useState<string[]>([]); // Multi-select state
+  
+  // Creates array produce of type ProduceItem from setProduce
+  const [produce, setProduce] = useState<ProduceItem[]>([]);
+
+    /**
+   * Creates array selectedTiles of strings that tracks which tiles
+   * are currently selected.
+   */ 
+  const [selectedTiles, setSelectedTiles] = useState<string[]>([]);
+
+  // Necessary for navigation
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  // Fetch data from Firestore
+  /**
+   * Here is where we query our Firestore database.
+   * Currently, we directly call the full Produce collection
+   * and converts the collection into a ProduceItem[] array.
+   * This array then becomes the produce array above
+   * */
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.log("Fetching data from Firestore...");
+        // query Produce collection
         const produceRef = collection(FIRESTORE_DB, "Produce");
+        // gets docs from produce collection
         const snapshot = await getDocs(produceRef);
 
         if (snapshot.empty) {
           console.warn("No documents found in Firestore.");
         }
-
+        // creates array from docs
         const produceList: ProduceItem[] = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
 
         console.log("Fetched Data:", produceList);
+        // sets produce array to the array of fetched docs
         setProduce(produceList);
       } catch (error) {
         console.error("Error fetching produce:", error);
       }
     };
-
+    // calls the above
     fetchData();
   }, []);
 
-  // Toggle selection of tiles
+  // Updates selectedTiles by adding/removing tile id's
   const toggleSelection = (id: string) => {
     setSelectedTiles((prevSelected) =>
       prevSelected.includes(id)
-        ? prevSelected.filter((tileId) => tileId !== id) // Remove if already selected
-        : [...prevSelected, id] // Add if not selected
+        // toggles off
+        ? prevSelected.filter((tileId) => tileId !== id)
+        // toggles on
+        : [...prevSelected, id] 
     );
   };
 
@@ -76,6 +101,11 @@ const Search: React.FC = () => {
     });
   }, [navigation]);
 
+  /**
+   * This section handles the creation of the FlatList
+   * and tiles in accordance to the information stored in
+   * produce. In essence, this builds the UI programmatically
+   */
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Search</Text>
@@ -84,9 +114,11 @@ const Search: React.FC = () => {
       <FlatList
         data={produce}
         keyExtractor={(item) => item.id}
+        // change number of columns here
         numColumns={4}
         contentContainerStyle={styles.listContent} // Ensures proper scrolling
         renderItem={({ item }) => (
+          // allows for highlighting tiles
           <TouchableOpacity
             style={[
               styles.tile,
