@@ -1,6 +1,6 @@
 # 🍓 Seasonal Bites  
 
-Seasonal Bites is a simple React Native app that helps users track their favorite fruits and check if they are in season based on their region.  
+Seasonal Bites is a simple React Native app that helps users track their favorite fruits and veggies check if they are in season based on their region.  
 
 ## 🚀 Features  
 
