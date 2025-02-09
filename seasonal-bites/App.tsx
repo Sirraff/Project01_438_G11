@@ -6,6 +6,8 @@ import Login from './app/screens/Login';
 import CreateAccount from './app/screens/CreateAccount';
 import Menu from './app/screens/Menu';
 import Search from "./app/screens/Search";
+import Settings from "./app/screens/Settings";
+import LocationSettings from "./app/screens/LocationSettings";
 
 const Stack = createNativeStackNavigator();
 
@@ -32,7 +34,18 @@ export default function App() {
          <Stack.Screen
            name='Search'
            component={Search}
-           options={{ headerShown: true }} />
+           options={{ headerShown: true }}
+         />
+          <Stack.Screen
+            name="Settings"
+            component={Settings}
+            options={{ headerShown: true }}
+          />
+          <Stack.Screen
+            name="LocationSettings"
+            component={LocationSettings}
+            options={{ headerShown: true }}
+          />
       </Stack.Navigator>
     </NavigationContainer>
   );
