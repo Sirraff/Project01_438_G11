@@ -4,4 +4,6 @@ export type RootStackParamList = {
     TileSelector: undefined;
     CreateAccount: undefined;
     Login: undefined;
+    Settings: undefined;
+    LocationSettings: undefined;
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Animated, View, Button, Text, FlatList, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../navigation/types"; // Import the type from App.tsx
+import { RootStackParamList } from "../utils/navigation"; // Import the type from App.tsx
 import { collection, getDocs } from "firebase/firestore";
 import { FIRESTORE_DB } from "../../FirebaseConfig"; // Import Firestore instance
 import { FIREBASE_AUTH } from "../../FirebaseConfig";

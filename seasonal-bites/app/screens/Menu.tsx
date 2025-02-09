@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Button } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
-import { RootStackParamList } from '../navigation/types';
+import { RootStackParamList } from '../utils/navigation';
 import { FIREBASE_AUTH } from '../../FirebaseConfig';
 import { signOut } from 'firebase/auth';
 
@@ -51,6 +51,14 @@ const Menu: React.FC = () => {
                     onPress={() => {}}
                 >
                     <Text style={styles.buttonText}>Favorites</Text>
+                </TouchableOpacity>
+
+                {/* Button to navigate to the settings screen */}
+                <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => navigation.navigate("Settings")}
+                >
+                    <Text style={styles.buttonText}>Settings</Text>
                 </TouchableOpacity>
             </View>
         </View>
