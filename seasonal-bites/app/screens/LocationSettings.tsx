@@ -57,7 +57,7 @@ const LocationSettings: React.FC = () => {
 
             <TextInput
                 style={styles.input}
-                placeholder="Enter State Name or Abbreviation (e.g., CA or California)"
+                placeholder="Enter State (e.g., CA or California)"
                 value={stateInput}
                 onChangeText={(text) => {
                     setStateInput(text);
