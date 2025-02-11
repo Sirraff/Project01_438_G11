@@ -1,41 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { zipCodeData } from "../utils/locationStorage";
+import { stateData } from "../utils/locationStorage";
 
-// Allows users to input, save, and clear their ZIP code location
+// Allows users to input, save, and clear their state location
 const LocationSettings: React.FC = () => {
-    const [zipCode, setZipCode] = useState("");
-    const [location, setLocation] = useState<{ city: string; state: string } | null>(null);
+    const [stateInput, setStateInput] = useState("");
+    const [location, setLocation] = useState<{ name: string; abbreviation: string } | null>(null);
     const [error, setError] = useState("");
 
     useEffect(() => {
         const loadLocation = async () => {
-            const savedZip = await AsyncStorage.getItem("selectedZipCode");
-            if (savedZip && zipCodeData[savedZip]) {
-                setLocation(zipCodeData[savedZip]);
-                setZipCode(savedZip);
+            const savedState = await AsyncStorage.getItem("selectedState");
+            if (savedState) {
+                const foundState = Object.values(stateData).find(
+                    (state) => state.abbreviation === savedState || state.name.toLowerCase() === savedState.toLowerCase()
+                );
+                if (foundState) {
+                    setLocation(foundState);
+                    setStateInput(savedState);
+                }
             }
         };
         loadLocation();
     }, []);
 
-    // Handles saving a valid ZIP code and storing it in AsyncStorage
+    // Handles saving a valid state (name or abbreviation) and storing it in AsyncStorage
     const handleSaveLocation = async () => {
-        if (zipCodeData[zipCode]) {
-            const selectedLocation = zipCodeData[zipCode];
-            setLocation(selectedLocation);
-            await AsyncStorage.setItem("selectedZipCode", zipCode);
+        const upperInput = stateInput.toUpperCase();
+        const foundState = Object.values(stateData).find(
+            (state) => state.abbreviation === upperInput || state.name.toLowerCase() === stateInput.toLowerCase()
+        );
+
+        if (foundState) {
+            setLocation(foundState);
+            await AsyncStorage.setItem("selectedState", foundState.abbreviation);
             setError("");
         } else {
-            setError("Invalid ZIP code. Please enter a valid ZIP code.");   // Show error
+            setError("Invalid state. Please enter a valid U.S. state name or abbreviation.");
         }
     };
 
-    // Clears the saved ZIP code
+    // Clears the saved state
     const handleClearLocation = async () => {
-        await AsyncStorage.removeItem("selectedZipCode");
-        setZipCode("");
+        await AsyncStorage.removeItem("selectedState");
+        setStateInput("");
         setLocation(null);
         setError("");
     };
@@ -43,17 +52,15 @@ const LocationSettings: React.FC = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Set Your Location</Text>
-            <Text style={styles.subtitle}>Enter your ZIP code to customize results.</Text>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <TextInput
                 style={styles.input}
-                placeholder="Enter ZIP Code"
-                keyboardType="numeric"
-                value={zipCode}
+                placeholder="Enter State Name or Abbreviation (e.g., CA or California)"
+                value={stateInput}
                 onChangeText={(text) => {
-                    setZipCode(text);
+                    setStateInput(text);
                     setError("");
                 }}
             />
@@ -64,7 +71,7 @@ const LocationSettings: React.FC = () => {
 
             {location && (
                 <Text style={styles.locationText}>
-                    Selected Location: {location.city}, {location.state}
+                    Selected Location: {location.name} ({location.abbreviation})
                 </Text>
             )}
 
