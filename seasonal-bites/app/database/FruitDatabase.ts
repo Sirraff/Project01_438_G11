@@ -76,4 +76,16 @@ const getProduce = async (): Promise<any[]> => {
 
 };
 
-export { insertProduce, getProduce, insertUniqueProduce };
+const getProduceByName = async (name_produce: string): Promise<any | null> => {
+
+      const db = await getDatabase();
+  
+      const selectQuery = 'SELECT * FROM produce WHERE name_produce = ? LIMIT 1';
+      const result = await db.getAllAsync(selectQuery, [name_produce]);
+  
+      return result || null; // Return result if found, otherwise return null
+    
+  };
+  
+
+export { insertProduce, getProduce, insertUniqueProduce, getProduceByName };
