@@ -1,25 +1,24 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Animated, View, Button, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect, CommonActions } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../utils/navigation"; // Import the type from App.tsx
+import { RootStackParamList } from "../utils/navigation";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
-import { signOut } from 'firebase/auth';
+import { signOut } from "firebase/auth";
 
-import { getProduce } from '../database/FruitDatabase';
+import { getProduce } from "../database/FruitDatabase";
 
 /**
  * Defines an interface for items fetched from the database
  */
 interface ProduceItem {
-  id: string;
+  id: number; // Changed from string to number to match SQLite
   name?: string;
   description?: string;
-  imageurl?: string;
+  imageurl?: string; // Changed from imageurl to match SQLite column
 }
 
 const Search: React.FC = () => {
-  
   const [produce, setProduce] = useState<ProduceItem[]>([]);
   const [selectedTiles, setSelectedTiles] = useState<string[]>([]);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -28,26 +27,30 @@ const Search: React.FC = () => {
   /**
    * Fetch produce data from the database
    */
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        console.log("Fetching data from SQLite database...");
-        const produceList = await getProduce();
-        console.log("Fetched Data:", produceList);
-        setProduce(produceList);
-      } catch (error) {
-        console.error("Error fetching produce:", error);
-      }
-    };
-    fetchData();
-  }, []);
+  const fetchData = async () => {
+    try {
+      console.log("🔄 Fetching updated data from SQLite database...");
+      const produceList = await getProduce();
+      console.log("📜 Fetched Data:", produceList);
+      setProduce(produceList);
+    } catch (error) {
+      console.error("❌ Error fetching produce:", error);
+    }
+  };
+
+  // Refresh data when component is focused
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   // Toggles selection of tiles
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: number) => {
     setSelectedTiles((prevSelected) =>
-      prevSelected.includes(id)
-        ? prevSelected.filter((tileId) => tileId !== id)
-        : [...prevSelected, id] 
+      prevSelected.includes(id.toString())
+        ? prevSelected.filter((tileId) => tileId !== id.toString())
+        : [...prevSelected, id.toString()]
     );
   };
 
@@ -67,30 +70,31 @@ const Search: React.FC = () => {
 
   // Handles user logout with confirmation
   const handleLogout = async () => {
-    Alert.alert(
-      "Confirm Logout",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Logout", onPress: async () => {
-            try {
-              await signOut(FIREBASE_AUTH);
-              navigation.navigate('Login');
-            } catch (error) {
-              console.error("Logout Error:", error);
-            }
+    Alert.alert("Confirm Logout", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        onPress: async () => {
+          try {
+            await signOut(FIREBASE_AUTH);
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: "Login" }],
+              })
+            );
+          } catch (error) {
+            console.error("❌ Logout Error:", error);
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   // Set header logout button
   useEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <Button title="Logout" onPress={handleLogout} color="#2d936c" />
-      ),
+      headerRight: () => <Button title="Logout" onPress={handleLogout} color="#2d936c" />,
     });
   }, [navigation]);
 
@@ -98,32 +102,30 @@ const Search: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Search</Text>
 
-      {/* Render SQLite Data in FlatList */}
-      <FlatList
-        data={produce}
-        keyExtractor={(item) => item.id}
-        numColumns={4}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.tile,
-              selectedTiles.includes(item.id) && styles.selectedTile,
-            ]}
-            onPress={() => toggleSelection(item.id)}
-          >
-            {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
-            <Text style={[
-              styles.tileText,
-              selectedTiles.includes(item.id) && styles.selectedText
-            ]}>
-              {item.name || "Unnamed Item"}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
+      {/* Show message if no items found */}
+      {produce.length === 0 ? (
+        <Text style={styles.emptyMessage}>No produce items found.</Text>
+      ) : (
+        <FlatList
+          data={produce}
+          keyExtractor={(item) => item.id.toString()} // Ensure id is a string
+          numColumns={4}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.tile, selectedTiles.includes(item.id.toString()) && styles.selectedTile]}
+              onPress={() => toggleSelection(item.id)}
+            >
+              {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
+              <Text style={[styles.tileText, selectedTiles.includes(item.id.toString()) && styles.selectedText]}>
+                {item.name || "Unnamed Item"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
-      {/* Sliding Button */}
+      {/* Sliding Clear Selection Button */}
       <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
         <TouchableOpacity style={styles.button} onPress={clearSelection}>
           <Text style={styles.buttonText}>Clear Selection ({selectedTiles.length})</Text>
@@ -194,6 +196,11 @@ const styles = StyleSheet.create({
     bottom: 20,
     width: "80%",
     alignSelf: "center",
+  },
+  emptyMessage: {
+    fontSize: 18,
+    color: "#888",
+    marginTop: 20,
   },
 });
 
