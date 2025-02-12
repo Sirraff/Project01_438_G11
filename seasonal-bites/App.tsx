@@ -8,6 +8,7 @@ import Menu from './app/screens/Menu';
 import Search from "./app/screens/Search";
 import Settings from "./app/screens/Settings";
 import LocationSettings from "./app/screens/LocationSettings";
+import Loading from "./app/screens/Loading";
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +46,11 @@ export default function App() {
             name="LocationSettings"
             component={LocationSettings}
             options={{ headerShown: true }}
+          />
+          <Stack.Screen
+            name="Loading"
+            component={Loading}
+            options={{ headerShown: false }}
           />
       </Stack.Navigator>
     </NavigationContainer>
