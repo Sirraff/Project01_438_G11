@@ -69,7 +69,7 @@ const Login = () => {
                 </TouchableOpacity>
 
                 {/* Links user to Create Account page */}
-                <TouchableOpacity onPress={() => navigation.navigate('CreateAccount')}>
+                <TouchableOpacity onPress={() => navigation.navigate('Loading')}>
                     <Text style={styles.footerText}>Don’t have an account? Sign up here.</Text>
                 </TouchableOpacity>
             </View>
