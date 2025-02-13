@@ -24,7 +24,7 @@ const Login = () => {
         try {
             const response = await signInWithEmailAndPassword(auth, email, password);
             console.log('Login successful:', response);
-            navigation.navigate('Menu');    // Redirects to Menu screen
+            navigation.navigate('Loading');    // Redirects to Loading screen
         } catch (error) {
             console.log(error);
             setError(error.message);
@@ -69,7 +69,7 @@ const Login = () => {
                 </TouchableOpacity>
 
                 {/* Links user to Create Account page */}
-                <TouchableOpacity onPress={() => navigation.navigate('Loading')}>
+                <TouchableOpacity onPress={() => navigation.navigate('CreateAccount')}>
                     <Text style={styles.footerText}>Don’t have an account? Sign up here.</Text>
                 </TouchableOpacity>
             </View>
