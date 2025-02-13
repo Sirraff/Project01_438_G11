@@ -6,5 +6,5 @@ export type RootStackParamList = {
     Login: undefined;
     Settings: undefined;
     LocationSettings: undefined;
-    Loading : undefined;
+    Loading: undefined;
 };
