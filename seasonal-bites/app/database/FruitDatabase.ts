@@ -108,4 +108,5 @@ const getProduceByName = async (name_produce: string): Promise<ProduceItem | nul
 };
 
 // Exports
+
 export { insertProduce, getProduce, insertUniqueProduce, getProduceByName };
