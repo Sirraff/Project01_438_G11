@@ -48,7 +48,7 @@ const Menu: React.FC = () => {
                 {/* Placeholder button for Favorites screen */}
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={() => {}}
+                    onPress={() => { }}
                 >
                     <Text style={styles.buttonText}>Favorites</Text>
                 </TouchableOpacity>
@@ -66,44 +66,44 @@ const Menu: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-      backgroundColor: '#f5f5f5',
-  },
-  title: {
-      fontSize: 36,
-      fontWeight: 'bold',
-      color: '#2d936c',
-      textAlign: 'center',
-      marginBottom: 10,
-  },
-  subtitle: {
-      fontSize: 18,
-      color: '#666',
-      textAlign: 'center',
-      marginBottom: 20,
-  },
-  buttonContainer: {
-      width: '100%',
-      alignItems: 'center',
-  },
-  button: {
-      backgroundColor: '#2d936c',
-      borderRadius: 8,
-      paddingVertical: 12,
-      paddingHorizontal: 40,
-      marginVertical: 5,
-      width: '80%',
-      alignItems: 'center',
-  },
-  buttonText: {
-      color: 'white',
-      fontSize: 16,
-      fontWeight: '600',
-  },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#f5f5f5',
+    },
+    title: {
+        fontSize: 36,
+        fontWeight: 'bold',
+        color: '#2d936c',
+        textAlign: 'center',
+        marginBottom: 10,
+    },
+    subtitle: {
+        fontSize: 18,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    buttonContainer: {
+        width: '100%',
+        alignItems: 'center',
+    },
+    button: {
+        backgroundColor: '#2d936c',
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 40,
+        marginVertical: 5,
+        width: '80%',
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '600',
+    },
 });
 
 export default Menu;
