@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Animated, View, Button, Text, FlatList, TouchableOpacity, Image, StyleSheet, Alert } from "react-native";
-import { useNavigation, useFocusEffect, CommonActions } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../utils/navigation";
+import { Animated, View, Text, FlatList, TouchableOpacity, Image, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
-import { signOut } from "firebase/auth";
 
 import { getProduce } from "../database/FruitDatabase";
-import {  getUserByBaseId, updateUserFavorites } from "../database/UserDatabase";
+import { getUserFavorites, updateUserFavorites } from "../database/UserDatabase";
 
 /**
  * Defines an interface for items fetched from the database
@@ -20,38 +17,60 @@ interface ProduceItem {
   imageurl: string;
 }
 
+// Get screen dimensions
+const { width } = Dimensions.get("window");
+const TILE_SIZE = width / 4 - 20; // Dynamically adjust tile size based on screen width
+
 const Search: React.FC = () => {
   const [produce, setProduce] = useState<ProduceItem[]>([]);
-  const [selectedDocs, setSelectedDocs] = useState<string[]>([]); // Store produce_doc instead of id
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [userUID, setUserUID] = useState<string | null>(null);
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const [loading, setLoading] = useState<boolean>(true);
   const slideAnim = useRef(new Animated.Value(100)).current;
 
   /**
-   * Fetch produce data from the database
+   * Fetch produce data and user favorites
    */
   const fetchData = async () => {
     try {
       console.log("🔄 Fetching updated data from SQLite database...");
       const produceList = await getProduce();
       setProduce(produceList);
-      console.log("📜 Fetched Data:", produceList);
+      console.log("📜 Fetched Produce Data:", produceList);
 
       // Fetch logged-in user's UID
       const auth = FIREBASE_AUTH;
       const currentUser = auth.currentUser;
       if (currentUser) {
         setUserUID(currentUser.uid);
+
+        // Fetch and parse user's favorites from the database
+        const favoritesString = await getUserFavorites(currentUser.uid);
+        if (favoritesString) {
+          const favoritesArray = favoritesString.split(",").map((item) => item.trim());
+          setUserFavorites(favoritesArray);
+          console.log("✅ Loaded user favorites:", favoritesArray);
+        } else {
+          console.log("⚠️ No favorites found for this user.");
+        }
       }
     } catch (error) {
-      console.error("❌ Error fetching produce:", error);
+      console.error("❌ Error fetching data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Refresh data when component is focused
+  // Refresh data when component is focused and clear selection when leaving
   useFocusEffect(
     useCallback(() => {
       fetchData();
+
+      // Cleanup function: Clears selected items when the user navigates away
+      return () => {
+        setSelectedDocs([]);
+      };
     }, [])
   );
 
@@ -73,19 +92,36 @@ const Search: React.FC = () => {
     }).start();
   }, [selectedDocs]);
 
-  // Updates the user's favorites in the database
+  // Updates the user's favorites in the database and updates UI
   const updateFavorites = async () => {
     if (!userUID) {
       console.warn("⚠️ No user logged in, cannot update favorites.");
       return;
     }
 
-    const favoritesString = selectedDocs.join(", "); // Convert array to a comma-separated string
-
     try {
       console.log(`🔄 Updating favorites for user ${userUID}...`);
-      await updateUserFavorites(userUID, favoritesString);
-      console.log("✅ Favorites updated successfully!");
+
+      // Fetch current user's stored favorites
+      const currentFavoritesString = await getUserFavorites(userUID);
+      const currentFavoritesArray = currentFavoritesString ? currentFavoritesString.split(",").map((item) => item.trim()) : [];
+
+      // Ensure no duplicates by merging and filtering unique values
+      const updatedFavoritesArray = Array.from(new Set([...currentFavoritesArray, ...selectedDocs]));
+
+      // Convert to comma-separated string
+      const updatedFavoritesString = updatedFavoritesArray.join(", ");
+
+      // Update the user's favorites in the database
+      await updateUserFavorites(userUID, updatedFavoritesString);
+
+      console.log("✅ Favorites updated successfully!", updatedFavoritesString);
+
+      // Clear selected tiles after updating
+      setSelectedDocs([]);
+
+      // Update userFavorites so newly added items turn pink immediately
+      setUserFavorites(updatedFavoritesArray);
     } catch (error) {
       console.error("❌ Error updating favorites:", error);
     }
@@ -95,34 +131,41 @@ const Search: React.FC = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Search</Text>
 
-      {/* Show message if no items found */}
-      {produce.length === 0 ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : produce.length === 0 ? (
         <Text style={styles.emptyMessage}>No produce items found.</Text>
       ) : (
         <FlatList
           data={produce}
           keyExtractor={(item) => item.produce_doc}
-          numColumns={4}
+          numColumns={Math.floor(width / TILE_SIZE)} // Adjust number of columns dynamically
           contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.tile,
-                selectedDocs.includes(item.produce_doc) && styles.selectedTile,
-              ]}
-              onPress={() => toggleSelection(item.produce_doc)}
-            >
-              {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
-              <Text
+          renderItem={({ item }) => {
+            const isFavorite = userFavorites.includes(item.produce_doc);
+            const isSelected = selectedDocs.includes(item.produce_doc);
+
+            return (
+              <TouchableOpacity
                 style={[
-                  styles.tileText,
-                  selectedDocs.includes(item.produce_doc) && styles.selectedText,
+                  styles.tile,
+                  isFavorite && styles.favoriteTile, // Light pink for favorites
+                  isSelected && styles.selectedTile, // Darker green for selections
                 ]}
+                onPress={() => toggleSelection(item.produce_doc)}
               >
-                {item.name_produce || "Unnamed Item"}
-              </Text>
-            </TouchableOpacity>
-          )}
+                {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
+                <Text
+                  style={[
+                    styles.tileText,
+                    isSelected && styles.selectedText,
+                  ]}
+                >
+                  {item.name_produce || "Unnamed Item"}
+                </Text>
+              </TouchableOpacity>
+            );
+          }}
         />
       )}
 
@@ -151,29 +194,32 @@ const styles = StyleSheet.create({
     color: "#333",
   },
   listContent: {
-    alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: 20,
   },
   tile: {
     backgroundColor: "#f0f0f0",
-    padding: 20,
-    margin: 10,
+    padding: 10,
+    margin: 5,
     borderRadius: 10,
-    width: 120,
+    width: TILE_SIZE,
     alignItems: "center",
   },
+  favoriteTile: {
+    backgroundColor: "#ffccd5", // Light pink background for user favorites
+  },
   selectedTile: {
-    backgroundColor: "#2d936c",
+    backgroundColor: "#2d936c", // Green background for selected tiles
     borderWidth: 2,
     borderColor: "#ffffff",
   },
   image: {
-    width: 60,
-    height: 60,
-    marginBottom: 5,
+    width: TILE_SIZE * 0.6,
+    height: TILE_SIZE * 0.6,
     resizeMode: "contain",
   },
   tileText: {
-    fontSize: 16,
+    fontSize: 14,
     color: "#333",
     marginTop: 5,
   },
