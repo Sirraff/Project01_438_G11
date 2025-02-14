@@ -1,15 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
-import { collection, doc, getDoc } from "firebase/firestore";
-import { FIRESTORE_DB } from "../../FirebaseConfig";
+import { getUserFavorites } from "../database/UserDatabase";
 import { getAuth } from "firebase/auth"; // Import authentication
-
-interface FullUser {
-    id: number;
-    name_user: string;
-    base_id: string;
-    favorites: string;
-}
 
 const Favorites = () => {
     const [favorites, setFavorites] = useState<string[]>([]);
@@ -29,12 +21,12 @@ const Favorites = () => {
                 const userId = user.uid; // Get the authenticated user's ID
                 console.log("Fetching favorites for user:", userId);
 
-                // Reference to the document in the 'favorites' collection
-                const userFavoritesRef = doc(FIRESTORE_DB, "favorites", userId); // Correct way
-                const docSnap = await getDoc(userFavoritesRef);
+                // Fetch favorites from the SQLite database
+                const favoritesString = await getUserFavorites(userId);
 
-                if (docSnap.exists()) {
-                    setFavorites(docSnap.data().favorites_list || []); // Assuming 'favorites' is stored as an array
+                if (favoritesString) {
+                    const favoritesArray = favoritesString.split(",").map(item => item.trim());
+                    setFavorites(favoritesArray);
                 } else {
                     console.log("No favorites found for this user.");
                 }

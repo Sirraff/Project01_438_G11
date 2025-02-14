@@ -129,6 +129,25 @@ const getUserByBaseId = async (base_id: string): Promise<FullUser | null> => {
     }
 };
 
+const getUserFavorites = async (base_id: string): Promise<string | null> => {
+    const db = await getDatabase();
+    try {
+        const selectQuery = "SELECT favorites FROM users WHERE base_id = ? LIMIT 1";
+        const result = await db.getFirstAsync(selectQuery, [base_id]) as { favorites: string } | undefined;
+
+        if (result) {
+            console.log(`✅ Successfully retrieved favorites for base_id: ${base_id}`);
+            return result.favorites;
+        } else {
+            console.log(`⚠️ No favorites found for base_id: ${base_id}`);
+            return null;
+        }
+    } catch (error) {
+        console.error(`❌ Error retrieving favorites for base_id: ${base_id}`, error);
+        return null;
+    }
+};
+
 // Exports
 
-export { insertUser, getUser, insertUniqueUser, getUserByName, getUserByBaseId, updateUserFavorites };
+export { insertUser, getUser, insertUniqueUser, getUserByName, getUserByBaseId, updateUserFavorites, getUserFavorites };
