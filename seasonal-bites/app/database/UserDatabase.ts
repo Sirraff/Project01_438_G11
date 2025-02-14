@@ -116,6 +116,19 @@ const getUserByBaseId = async (base_id: string): Promise<FullUser | null> => {
     return result || null;  // Return null if no result is found
   };
 
+  const updateUserFavorites = async (base_id: string, favorites: string) => {
+    const db = await getDatabase();
+    try {
+        const updateQuery = "UPDATE users SET favorites = ? WHERE base_id = ?";
+        await db.runAsync(updateQuery, [favorites, base_id]);
+        console.log(`✅ Successfully updated favorites for user with base_id: ${base_id}`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Error updating favorites for base_id: ${base_id}`, error);
+        return false;
+    }
+};
+
 // Exports
 
-export { insertUser, getUser, insertUniqueUser, getUserByName, getUserByBaseId };
+export { insertUser, getUser, insertUniqueUser, getUserByName, getUserByBaseId, updateUserFavorites };

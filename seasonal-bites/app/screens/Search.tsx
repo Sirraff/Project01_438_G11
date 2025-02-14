@@ -7,6 +7,7 @@ import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { signOut } from "firebase/auth";
 
 import { getProduce } from "../database/FruitDatabase";
+import {  getUserByBaseId, updateUserFavorites } from "../database/UserDatabase";
 
 /**
  * Defines an interface for items fetched from the database
@@ -21,7 +22,8 @@ interface ProduceItem {
 
 const Search: React.FC = () => {
   const [produce, setProduce] = useState<ProduceItem[]>([]);
-  const [selectedTiles, setSelectedTiles] = useState<string[]>([]);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]); // Store produce_doc instead of id
+  const [userUID, setUserUID] = useState<string | null>(null);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const slideAnim = useRef(new Animated.Value(100)).current;
 
@@ -32,8 +34,15 @@ const Search: React.FC = () => {
     try {
       console.log("🔄 Fetching updated data from SQLite database...");
       const produceList = await getProduce();
-      console.log("📜 Fetched Data:", produceList);
       setProduce(produceList);
+      console.log("📜 Fetched Data:", produceList);
+
+      // Fetch logged-in user's UID
+      const auth = FIREBASE_AUTH;
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        setUserUID(currentUser.uid);
+      }
     } catch (error) {
       console.error("❌ Error fetching produce:", error);
     }
@@ -46,58 +55,41 @@ const Search: React.FC = () => {
     }, [])
   );
 
-  // Toggles selection of tiles
-  const toggleSelection = (id: number) => {
-    setSelectedTiles((prevSelected) =>
-      prevSelected.includes(id.toString())
-        ? prevSelected.filter((tileId) => tileId !== id.toString())
-        : [...prevSelected, id.toString()]
+  // Toggles selection of produce_doc
+  const toggleSelection = (produce_doc: string) => {
+    setSelectedDocs((prevSelected) =>
+      prevSelected.includes(produce_doc)
+        ? prevSelected.filter((doc) => doc !== produce_doc) // Remove if already selected
+        : [...prevSelected, produce_doc] // Add if not selected
     );
   };
 
-  // Sliding animation for the clear button
+  // Sliding animation for the update favorites button
   useEffect(() => {
     Animated.timing(slideAnim, {
-      toValue: selectedTiles.length > 0 ? 0 : 100,
+      toValue: selectedDocs.length > 0 ? 0 : 100,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, [selectedTiles]);
+  }, [selectedDocs]);
 
-  // Clears selected tile array
-  const clearSelection = () => {
-    setSelectedTiles([]);
+  // Updates the user's favorites in the database
+  const updateFavorites = async () => {
+    if (!userUID) {
+      console.warn("⚠️ No user logged in, cannot update favorites.");
+      return;
+    }
+
+    const favoritesString = selectedDocs.join(", "); // Convert array to a comma-separated string
+
+    try {
+      console.log(`🔄 Updating favorites for user ${userUID}...`);
+      await updateUserFavorites(userUID, favoritesString);
+      console.log("✅ Favorites updated successfully!");
+    } catch (error) {
+      console.error("❌ Error updating favorites:", error);
+    }
   };
-
-  // Handles user logout with confirmation
-  const handleLogout = async () => {
-    Alert.alert("Confirm Logout", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        onPress: async () => {
-          try {
-            await signOut(FIREBASE_AUTH);
-            navigation.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{ name: "Login" }],
-              })
-            );
-          } catch (error) {
-            console.error("❌ Logout Error:", error);
-          }
-        },
-      },
-    ]);
-  };
-
-  // Set header logout button
-  useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => <Button title="Logout" onPress={handleLogout} color="#2d936c" />,
-    });
-  }, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -109,16 +101,24 @@ const Search: React.FC = () => {
       ) : (
         <FlatList
           data={produce}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.produce_doc}
           numColumns={4}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[styles.tile, selectedTiles.includes(item.id.toString()) && styles.selectedTile]}
-              onPress={() => toggleSelection(item.id)}
+              style={[
+                styles.tile,
+                selectedDocs.includes(item.produce_doc) && styles.selectedTile,
+              ]}
+              onPress={() => toggleSelection(item.produce_doc)}
             >
               {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
-              <Text style={[styles.tileText, selectedTiles.includes(item.id.toString()) && styles.selectedText]}>
+              <Text
+                style={[
+                  styles.tileText,
+                  selectedDocs.includes(item.produce_doc) && styles.selectedText,
+                ]}
+              >
                 {item.name_produce || "Unnamed Item"}
               </Text>
             </TouchableOpacity>
@@ -126,10 +126,10 @@ const Search: React.FC = () => {
         />
       )}
 
-      {/* Sliding Clear Selection Button */}
+      {/* Sliding Update Favorites Button */}
       <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
-        <TouchableOpacity style={styles.button} onPress={clearSelection}>
-          <Text style={styles.buttonText}>Clear Selection ({selectedTiles.length})</Text>
+        <TouchableOpacity style={styles.button} onPress={updateFavorites}>
+          <Text style={styles.buttonText}>Update Favorites ({selectedDocs.length})</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
