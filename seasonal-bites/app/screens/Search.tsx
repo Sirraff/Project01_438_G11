@@ -12,10 +12,11 @@ import { getProduce } from "../database/FruitDatabase";
  * Defines an interface for items fetched from the database
  */
 interface ProduceItem {
-  id: number; 
-  name_produce?: string;
-  description?: string;
-  imageurl?: string;
+  id: number;
+  produce_doc: string;
+  name_produce: string;
+  description: string;
+  imageurl: string;
 }
 
 const Search: React.FC = () => {

@@ -69,9 +69,10 @@ const Loading: React.FC = () => {
 
                         console.log(`🔍 Attempting to insert '${item.name}' into SQLite...`);
                         const success = await insertUniqueProduce(
+                            item.id || "ID Missing",
                             item.name || "Unnamed",
                             item.description || "",
-                            localUri // Corrected to match SQLite `image_path`
+                            localUri
                         );
 
                         if (success) {
@@ -102,7 +103,7 @@ const Loading: React.FC = () => {
             }
 
             allProduce.forEach((item: any, index: number) => {
-                console.log(`${index + 1}. ${item.name_produce} - ${item.description} - ${item.imageurl}`);
+                console.log(`${index + 1}. ${item.produce_doc} - ${item.name_produce} - ${item.description} - ${item.imageurl}`);
             });
 
             setDatabaseStatus(`Database contains ${allProduce.length} items.`);

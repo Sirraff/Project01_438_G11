@@ -2,6 +2,7 @@ import * as SQLite from 'expo-sqlite';
 
 interface ProduceItem {
   id: number;
+  produce_doc: string;
   name_produce: string;
   description: string;
   imageurl: string;
@@ -26,6 +27,7 @@ const initializeDB = async () => {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS produce (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      produce_doc TEXT UNIQUE,
       name_produce TEXT UNIQUE,
       description TEXT,
       imageurl TEXT
@@ -41,14 +43,14 @@ const getDatabase = async () => {
 };
 
 // Inserts produce **without checking for duplicates**
-const insertProduce = async (name_produce: string, description: string, imageurl: string) => {
+const insertProduce = async (produce_doc: string, name_produce: string, description: string, imageurl: string) => {
   const db = await getDatabase();
-  const insertQuery = 'INSERT INTO produce (name_produce, description, imageurl) VALUES (?, ?, ?)';
-  await db.runAsync(insertQuery, [name_produce, description, imageurl]);
+  const insertQuery = 'INSERT INTO produce (produce_doc, name_produce, description, imageurl) VALUES (?, ?, ?, ?)';
+  await db.runAsync(insertQuery, [produce_doc, name_produce, description, imageurl]);
 };
 
 // Inserts produce **only if it doesn't exist**
-const insertUniqueProduce = async (name_produce: string, description: string, imageurl: string) => {
+const insertUniqueProduce = async (produce_doc: string, name_produce: string, description: string, imageurl: string) => {
   const db = await getDatabase();
   
   try {
@@ -61,8 +63,8 @@ const insertUniqueProduce = async (name_produce: string, description: string, im
     }
 
     // If not found, insert into database
-    const insertQuery = "INSERT INTO produce (name_produce, description, imageurl) VALUES (?, ?, ?)";
-    await db.runAsync(insertQuery, [name_produce, description, imageurl]);
+    const insertQuery = "INSERT INTO produce (produce_doc, name_produce, description, imageurl) VALUES (?, ?, ?, ?)";
+    await db.runAsync(insertQuery, [produce_doc, name_produce, description, imageurl]);
 
     return true;
 
@@ -96,6 +98,15 @@ const getProduceByName = async (name_produce: string): Promise<ProduceItem | nul
   return result || null;  // Return null if no result is found
 };
 
+const getProduceByDoc = async (produce_doc: string): Promise<ProduceItem | null> => {
+    const db = await getDatabase();
+    const selectQuery = 'SELECT * FROM produce WHERE produce_doc = ? LIMIT 1';
+    
+    const result = await db.getFirstAsync(selectQuery, [produce_doc]) as ProduceItem | undefined;
+  
+    return result || null;  // Return null if no result is found
+  };
+
 // Exports
 
-export { insertProduce, getProduce, insertUniqueProduce, getProduceByName };
+export { insertProduce, getProduce, insertUniqueProduce, getProduceByName, getProduceByDoc };
