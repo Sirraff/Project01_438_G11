@@ -57,7 +57,7 @@ const insertUniqueUser = async (name_user: string, base_id: string, favorites: s
   try {
     console.log(`🔍 Checking if '${name_user}' already exists in database...`);
 
-    const checkQuery = "SELECT COUNT(*) AS count FROM user WHERE name_user = ?";
+    const checkQuery = "SELECT COUNT(*) AS count FROM users WHERE name_user = ?";
     const result = await db.getFirstAsync(checkQuery, [name_user]) as { count: number } | undefined;
 
     console.log(`📊 Found count for '${name_user}':`, result?.count ?? "Unknown");
@@ -68,7 +68,7 @@ const insertUniqueUser = async (name_user: string, base_id: string, favorites: s
     }
 
     // If not found, insert into database
-    const insertQuery = "INSERT INTO user (name_user, description, imageurl) VALUES (?, ?, ?)";
+    const insertQuery = "INSERT INTO users (name_user, base_id, favorites) VALUES (?, ?, ?)";
     await db.runAsync(insertQuery, [name_user, base_id, favorites]);
 
     console.log(`✅ Successfully inserted: '${name_user}' into database.`);
@@ -84,7 +84,7 @@ const insertUniqueUser = async (name_user: string, base_id: string, favorites: s
 const getUser = async (): Promise<FullUser[]> => {
   console.log("🔄 Fetching user from database...");
   const db = await getDatabase();
-  const selectQuery = 'SELECT * FROM user';
+  const selectQuery = 'SELECT * FROM users';
   
   const result = await db.getAllAsync(selectQuery) as FullUser[];  // Explicitly cast result
   
@@ -100,7 +100,7 @@ const getUser = async (): Promise<FullUser[]> => {
 // Retrieves user by name
 const getUserByName = async (name_user: string): Promise<FullUser | null> => {
   const db = await getDatabase();
-  const selectQuery = 'SELECT * FROM user WHERE name_user = ? LIMIT 1';
+  const selectQuery = 'SELECT * FROM users WHERE name_user = ? LIMIT 1';
   
   const result = await db.getFirstAsync(selectQuery, [name_user]) as FullUser | undefined;
 
@@ -109,7 +109,7 @@ const getUserByName = async (name_user: string): Promise<FullUser | null> => {
 
 const getUserByBaseId = async (base_id: string): Promise<FullUser | null> => {
     const db = await getDatabase();
-    const selectQuery = 'SELECT * FROM user WHERE base_id = ? LIMIT 1';
+    const selectQuery = 'SELECT * FROM users WHERE base_id = ? LIMIT 1';
     
     const result = await db.getFirstAsync(selectQuery, [base_id]) as FullUser | undefined;
   
