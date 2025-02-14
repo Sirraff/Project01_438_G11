@@ -1,9 +1,9 @@
 import * as SQLite from 'expo-sqlite';
 
-interface ProduceItem {
+interface FullUser {
   id: number;
   name_user: string;
-  base_Id:string;
+  base_id:string;
   favorites: string;
 }
 
@@ -25,11 +25,11 @@ const initializeDB = async () => {
   const db = await openDatabase();
 
   const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS produce (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name_produce TEXT UNIQUE,
-      description TEXT,
-      imageurl TEXT
+    CREATE TABLE IF NOT EXISTS users (
+      user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name_user TEXT UNIQUE,
+      base_id TEXT,
+      favorites TEXT
     );
   `;
 
@@ -42,71 +42,80 @@ const getDatabase = async () => {
   return dbInstance!;
 };
 
-// Inserts produce **without checking for duplicates**
-const insertProduce = async (name_produce: string, description: string, imageurl: string) => {
+// Inserts user **without checking for duplicates**
+const insertUser = async (name_user: string, base_id: string, favorites: string) => {
   const db = await getDatabase();
-  const insertQuery = 'INSERT INTO produce (name_produce, description, imageurl) VALUES (?, ?, ?)';
-  await db.runAsync(insertQuery, [name_produce, description, imageurl]);
-  console.log(`✅ Produce Item ${name_produce} added successfully`);
+  const insertQuery = 'INSERT INTO users (name_user, base_id, favorites) VALUES (?, ?, ?)';
+  await db.runAsync(insertQuery, [name_user, base_id, favorites]);
+  console.log(`✅  User ${name_user} added successfully`);
 };
 
-// Inserts produce **only if it doesn't exist**
-const insertUniqueProduce = async (name_produce: string, description: string, imageurl: string) => {
+// Inserts user **only if it doesn't exist**
+const insertUniqueUser = async (name_user: string, base_id: string, favorites: string) => {
   const db = await getDatabase();
   
   try {
-    console.log(`🔍 Checking if '${name_produce}' already exists in database...`);
+    console.log(`🔍 Checking if '${name_user}' already exists in database...`);
 
-    const checkQuery = "SELECT COUNT(*) AS count FROM produce WHERE name_produce = ?";
-    const result = await db.getFirstAsync(checkQuery, [name_produce]) as { count: number } | undefined;
+    const checkQuery = "SELECT COUNT(*) AS count FROM user WHERE name_user = ?";
+    const result = await db.getFirstAsync(checkQuery, [name_user]) as { count: number } | undefined;
 
-    console.log(`📊 Found count for '${name_produce}':`, result?.count ?? "Unknown");
+    console.log(`📊 Found count for '${name_user}':`, result?.count ?? "Unknown");
 
     if (result && result.count > 0) {
-      console.log(`⚠️ Skipped '${name_produce}', already exists.`);
+      console.log(`⚠️ Skipped '${name_user}', already exists.`);
       return false; // Prevent duplicate insert
     }
 
     // If not found, insert into database
-    const insertQuery = "INSERT INTO produce (name_produce, description, imageurl) VALUES (?, ?, ?)";
-    await db.runAsync(insertQuery, [name_produce, description, imageurl]);
+    const insertQuery = "INSERT INTO user (name_user, description, imageurl) VALUES (?, ?, ?)";
+    await db.runAsync(insertQuery, [name_user, base_id, favorites]);
 
-    console.log(`✅ Successfully inserted: '${name_produce}' into database.`);
+    console.log(`✅ Successfully inserted: '${name_user}' into database.`);
     return true;
 
   } catch (error) {
-    console.error(`❌ Error inserting '${name_produce}':`, error);
+    console.error(`❌ Error inserting '${name_user}':`, error);
   }
 };
 
 
-// Retrieves produce with enhanced logging
-const getProduce = async (): Promise<ProduceItem[]> => {
-  console.log("🔄 Fetching produce from database...");
+// Retrieves user with enhanced logging
+const getUser = async (): Promise<FullUser[]> => {
+  console.log("🔄 Fetching user from database...");
   const db = await getDatabase();
-  const selectQuery = 'SELECT * FROM produce';
+  const selectQuery = 'SELECT * FROM user';
   
-  const result = await db.getAllAsync(selectQuery) as ProduceItem[];  // Explicitly cast result
+  const result = await db.getAllAsync(selectQuery) as FullUser[];  // Explicitly cast result
   
-  console.log(`📜 Retrieved ${result.length} produce items.`);
-  result.forEach((item: ProduceItem, index: number) => {  // Explicitly define type for 'item'
-    console.log(`${index + 1}. ${item.name_produce} - ${item.description} - ${item.imageurl}`);
+  console.log(`📜 Retrieved ${result.length} user items.`);
+  result.forEach((item: FullUser, index: number) => {  // Explicitly define type for 'item'
+    console.log(`${index + 1}. ${item.name_user} - ${item.base_id} - ${item.favorites}`);
   });
 
   return result;
 };
 
 
-// Retrieves produce by name
-const getProduceByName = async (name_produce: string): Promise<ProduceItem | null> => {
+// Retrieves user by name
+const getUserByName = async (name_user: string): Promise<FullUser | null> => {
   const db = await getDatabase();
-  const selectQuery = 'SELECT * FROM produce WHERE name_produce = ? LIMIT 1';
+  const selectQuery = 'SELECT * FROM user WHERE name_user = ? LIMIT 1';
   
-  const result = await db.getFirstAsync(selectQuery, [name_produce]) as ProduceItem | undefined;
+  const result = await db.getFirstAsync(selectQuery, [name_user]) as FullUser | undefined;
 
   return result || null;  // Return null if no result is found
 };
 
+const getUserByBaseId = async (base_id: string): Promise<FullUser | null> => {
+    const db = await getDatabase();
+    const selectQuery = 'SELECT * FROM user WHERE base_id = ? LIMIT 1';
+    
+    const result = await db.getFirstAsync(selectQuery, [base_id]) as FullUser | undefined;
+  
+    return result || null;  // Return null if no result is found
+  };
+
 // Exports
 
-export { insertProduce, getProduce, insertUniqueProduce, getProduceByName };
+export { insertUser, getUser, insertUniqueUser, getUserByName, getUserByBaseId };
