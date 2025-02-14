@@ -107,6 +107,20 @@ const getProduceByDoc = async (produce_doc: string): Promise<ProduceItem | null>
     return result || null;  // Return null if no result is found
   };
 
+  const searchProduceByName = async (searchTerm: string): Promise<ProduceItem[]> => {
+    const db = await getDatabase();
+    const selectQuery = "SELECT * FROM produce WHERE name_produce LIKE ?";
+
+    try {
+        const result = await db.getAllAsync(selectQuery, [`%${searchTerm}%`]) as ProduceItem[];
+        return result;
+    } catch (error) {
+        console.error(`❌ Error searching for produce with name like '${searchTerm}':`, error);
+        return [];
+    }
+};
+
+
 // Exports
 
-export { insertProduce, getProduce, insertUniqueProduce, getProduceByName, getProduceByDoc };
+export { insertProduce, getProduce, insertUniqueProduce, getProduceByName, getProduceByDoc, searchProduceByName };
