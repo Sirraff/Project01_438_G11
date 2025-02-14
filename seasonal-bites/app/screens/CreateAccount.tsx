@@ -6,6 +6,8 @@ import { RootStackParamList } from '../utils/navigation';
 import { FIREBASE_AUTH } from '../../FirebaseConfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 
+import { insertUniqueUser } from "../database/UserDatabase";
+
 type CreateAccountScreenNavigationProp = StackNavigationProp<RootStackParamList, 'CreateAccount'>;
 
 const CreateAccount: React.FC = () => {
@@ -51,7 +53,21 @@ const CreateAccount: React.FC = () => {
 
         setLoading(true);
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            const success = await insertUniqueUser(
+                email || "Email Missing",
+                user.uid || "Missing UID",
+                ""
+            );
+
+            if (success) {
+                console.log(`✅ Successfully inserted '${email}' into database.`);
+            } else {
+                console.log(`⚠️ Skipped duplicate '${email}'.`);
+            }
+
             navigation.navigate('Login');    // Navigate to Login after successful signup
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
