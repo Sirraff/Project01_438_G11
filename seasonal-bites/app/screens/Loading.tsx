@@ -102,7 +102,7 @@ const Loading: React.FC = () => {
             }
 
             allProduce.forEach((item: any, index: number) => {
-                console.log(`${index + 1}. ${item.name} - ${item.description} - ${item.imageurl}`);
+                console.log(`${index + 1}. ${item.name_produce} - ${item.description} - ${item.imageurl}`);
             });
 
             setDatabaseStatus(`Database contains ${allProduce.length} items.`);

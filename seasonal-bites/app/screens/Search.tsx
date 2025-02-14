@@ -12,10 +12,10 @@ import { getProduce } from "../database/FruitDatabase";
  * Defines an interface for items fetched from the database
  */
 interface ProduceItem {
-  id: number; // Changed from string to number to match SQLite
-  name?: string;
+  id: number; 
+  name_produce?: string;
   description?: string;
-  imageurl?: string; // Changed from imageurl to match SQLite column
+  imageurl?: string;
 }
 
 const Search: React.FC = () => {
@@ -108,7 +108,7 @@ const Search: React.FC = () => {
       ) : (
         <FlatList
           data={produce}
-          keyExtractor={(item) => item.id.toString()} // Ensure id is a string
+          keyExtractor={(item) => item.id.toString()}
           numColumns={4}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
@@ -118,7 +118,7 @@ const Search: React.FC = () => {
             >
               {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
               <Text style={[styles.tileText, selectedTiles.includes(item.id.toString()) && styles.selectedText]}>
-                {item.name || "Unnamed Item"}
+                {item.name_produce || "Unnamed Item"}
               </Text>
             </TouchableOpacity>
           )}

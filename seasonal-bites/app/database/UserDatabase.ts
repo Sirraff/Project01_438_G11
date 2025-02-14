@@ -2,9 +2,9 @@ import * as SQLite from 'expo-sqlite';
 
 interface ProduceItem {
   id: number;
-  name_produce: string;
-  description: string;
-  imageurl: string;
+  name_user: string;
+  base_Id:string;
+  favorites: string;
 }
 
 
@@ -14,7 +14,8 @@ let dbInstance: SQLite.SQLiteDatabase | null = null;
 // Opens the database **only once**
 const openDatabase = async () => {
   if (!dbInstance) {
-    dbInstance = await SQLite.openDatabaseAsync('produce.db');
+    dbInstance = await SQLite.openDatabaseAsync('user.db');
+    console.log('✅ Database opened successfully');
   }
   return dbInstance;
 };
@@ -33,6 +34,7 @@ const initializeDB = async () => {
   `;
 
   await db.execAsync(createTableQuery);
+  console.log('✅ Table created (or already exists)');
 };
 
 const getDatabase = async () => {
@@ -45,6 +47,7 @@ const insertProduce = async (name_produce: string, description: string, imageurl
   const db = await getDatabase();
   const insertQuery = 'INSERT INTO produce (name_produce, description, imageurl) VALUES (?, ?, ?)';
   await db.runAsync(insertQuery, [name_produce, description, imageurl]);
+  console.log(`✅ Produce Item ${name_produce} added successfully`);
 };
 
 // Inserts produce **only if it doesn't exist**
@@ -52,11 +55,15 @@ const insertUniqueProduce = async (name_produce: string, description: string, im
   const db = await getDatabase();
   
   try {
+    console.log(`🔍 Checking if '${name_produce}' already exists in database...`);
 
     const checkQuery = "SELECT COUNT(*) AS count FROM produce WHERE name_produce = ?";
     const result = await db.getFirstAsync(checkQuery, [name_produce]) as { count: number } | undefined;
 
+    console.log(`📊 Found count for '${name_produce}':`, result?.count ?? "Unknown");
+
     if (result && result.count > 0) {
+      console.log(`⚠️ Skipped '${name_produce}', already exists.`);
       return false; // Prevent duplicate insert
     }
 
@@ -64,6 +71,7 @@ const insertUniqueProduce = async (name_produce: string, description: string, im
     const insertQuery = "INSERT INTO produce (name_produce, description, imageurl) VALUES (?, ?, ?)";
     await db.runAsync(insertQuery, [name_produce, description, imageurl]);
 
+    console.log(`✅ Successfully inserted: '${name_produce}' into database.`);
     return true;
 
   } catch (error) {
@@ -74,12 +82,15 @@ const insertUniqueProduce = async (name_produce: string, description: string, im
 
 // Retrieves produce with enhanced logging
 const getProduce = async (): Promise<ProduceItem[]> => {
+  console.log("🔄 Fetching produce from database...");
   const db = await getDatabase();
   const selectQuery = 'SELECT * FROM produce';
   
   const result = await db.getAllAsync(selectQuery) as ProduceItem[];  // Explicitly cast result
   
+  console.log(`📜 Retrieved ${result.length} produce items.`);
   result.forEach((item: ProduceItem, index: number) => {  // Explicitly define type for 'item'
+    console.log(`${index + 1}. ${item.name_produce} - ${item.description} - ${item.imageurl}`);
   });
 
   return result;
