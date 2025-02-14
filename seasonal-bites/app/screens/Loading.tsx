@@ -4,16 +4,17 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../utils/navigation";
 import { collection, getDocs } from "firebase/firestore";
-import { FIRESTORE_DB } from "../../FirebaseConfig";
+import { FIRESTORE_DB, FIREBASE_AUTH } from "../../FirebaseConfig";
 import * as FileSystem from "expo-file-system";
 
 import { insertUniqueProduce, getProduce } from "../database/FruitDatabase";
+import { getUserByBaseId, insertUser } from "../database/UserDatabase";
 
 interface ProduceItem {
     id: string;
     name?: string;
     description?: string;
-    imageurl?: string; 
+    imageurl?: string;
 }
 
 const Loading: React.FC = () => {
@@ -25,6 +26,30 @@ const Loading: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                console.log("🔄 Fetching current Firebase user...");
+                const auth = FIREBASE_AUTH;
+                const currentUser = auth.currentUser;
+
+                if (!currentUser) {
+                    console.warn("⚠️ No user is currently logged in.");
+                    return;
+                }
+
+                const userUID = currentUser.uid; // Firebase user's unique ID
+                const userEmail = currentUser.email || "Unknown User"; // Fallback for email
+                console.log(`👤 Logged in as: ${userEmail} (UID: ${userUID})`);
+
+                // 🔍 Check if the user exists in the local database
+                const localUser = await getUserByBaseId(userUID);
+
+                if (!localUser) {
+                    console.log("🆕 User not found in local database. Inserting...");
+                    await insertUser(userEmail, userUID, ""); // Insert user with empty favorites
+                    console.log("✅ User successfully added to local database.");
+                } else {
+                    console.log("✔️ User already exists in local database.");
+                }
+
                 console.log("🔄 Fetching data from Firestore...");
                 const produceRef = collection(FIRESTORE_DB, "Produce");
                 const snapshot = await getDocs(produceRef);
@@ -46,7 +71,7 @@ const Loading: React.FC = () => {
             }
         };
 
-        fetchData();
+        fetchData(); // ✅ Now correctly inside useEffect
     }, []);
 
     // Download images and insert into DB with detailed logging
