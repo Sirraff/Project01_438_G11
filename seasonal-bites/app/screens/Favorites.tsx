@@ -19,10 +19,10 @@ interface ProduceItem {
 
 // Get screen dimensions
 const { width } = Dimensions.get("window");
-const TILE_SIZE = width / 4 - 20; // Dynamically adjust tile size based on screen width
+const TILE_SIZE = width / 4 - 20; // Adjust tile size dynamically
 
-const Search: React.FC = () => {
-  const [produce, setProduce] = useState<ProduceItem[]>([]);
+const Favorites: React.FC = () => {
+  const [favorites, setFavorites] = useState<ProduceItem[]>([]);
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [userUID, setUserUID] = useState<string | null>(null);
@@ -30,33 +30,42 @@ const Search: React.FC = () => {
   const slideAnim = useRef(new Animated.Value(100)).current;
 
   /**
-   * Fetch produce data and user favorites
+   * Fetch user's favorite produce
    */
-  const fetchData = async () => {
+  const fetchFavorites = async () => {
     try {
-      console.log("🔄 Fetching updated data from SQLite database...");
-      const produceList = await getProduce();
-      setProduce(produceList);
-      console.log("📜 Fetched Produce Data:", produceList);
-
-      // Fetch logged-in user's UID
+      console.log("🔄 Fetching favorite produce from SQLite database...");
       const auth = FIREBASE_AUTH;
       const currentUser = auth.currentUser;
-      if (currentUser) {
-        setUserUID(currentUser.uid);
 
-        // Fetch and parse user's favorites from the database
-        const favoritesString = await getUserFavorites(currentUser.uid);
-        if (favoritesString) {
-          const favoritesArray = favoritesString.split(",").map((item) => item.trim());
-          setUserFavorites(favoritesArray);
-          console.log("✅ Loaded user favorites:", favoritesArray);
-        } else {
-          console.log("⚠️ No favorites found for this user.");
-        }
+      if (!currentUser) {
+        console.log("⚠️ No authenticated user.");
+        setLoading(false);
+        return;
       }
+
+      setUserUID(currentUser.uid);
+
+      // Fetch user favorites from the database
+      const favoritesString = await getUserFavorites(currentUser.uid);
+      if (!favoritesString) {
+        console.log("⚠️ No favorites found for this user.");
+        setFavorites([]);
+        setLoading(false);
+        return;
+      }
+
+      const favoritesArray = favoritesString.split(",").map((item) => item.trim());
+      setUserFavorites(favoritesArray);
+
+      // Fetch full produce data and filter by user's favorites
+      const produceList = await getProduce();
+      const filteredFavorites = produceList.filter((item) => favoritesArray.includes(item.produce_doc));
+      setFavorites(filteredFavorites);
+
+      console.log("✅ Loaded favorite produce:", filteredFavorites);
     } catch (error) {
-      console.error("❌ Error fetching data:", error);
+      console.error("❌ Error fetching favorites:", error);
     } finally {
       setLoading(false);
     }
@@ -65,7 +74,7 @@ const Search: React.FC = () => {
   // Refresh data when component is focused and clear selection when leaving
   useFocusEffect(
     useCallback(() => {
-      fetchData();
+      fetchFavorites();
 
       // Cleanup function: Clears selected items when the user navigates away
       return () => {
@@ -83,7 +92,7 @@ const Search: React.FC = () => {
     );
   };
 
-  // Sliding animation for the update favorites button
+  // Sliding animation for the remove favorites button
   useEffect(() => {
     Animated.timing(slideAnim, {
       toValue: selectedDocs.length > 0 ? 0 : 100,
@@ -92,22 +101,18 @@ const Search: React.FC = () => {
     }).start();
   }, [selectedDocs]);
 
-  // Updates the user's favorites in the database and updates UI
-  const updateFavorites = async () => {
+  // Removes selected items from the user's favorites
+  const removeFavorites = async () => {
     if (!userUID) {
-      console.warn("⚠️ No user logged in, cannot update favorites.");
+      console.warn("⚠️ No user logged in, cannot remove favorites.");
       return;
     }
 
     try {
-      console.log(`🔄 Updating favorites for user ${userUID}...`);
+      console.log(`🔄 Removing selected favorites for user ${userUID}...`);
 
-      // Fetch current user's stored favorites
-      const currentFavoritesString = await getUserFavorites(userUID);
-      const currentFavoritesArray = currentFavoritesString ? currentFavoritesString.split(",").map((item) => item.trim()) : [];
-
-      // Ensure no duplicates by merging and filtering unique values
-      const updatedFavoritesArray = Array.from(new Set([...currentFavoritesArray, ...selectedDocs]));
+      // Remove selected items from user's favorites
+      const updatedFavoritesArray = userFavorites.filter((doc) => !selectedDocs.includes(doc));
 
       // Convert to comma-separated string
       const updatedFavoritesString = updatedFavoritesArray.join(", ");
@@ -115,42 +120,39 @@ const Search: React.FC = () => {
       // Update the user's favorites in the database
       await updateUserFavorites(userUID, updatedFavoritesString);
 
-      console.log("✅ Favorites updated successfully!", updatedFavoritesString);
+      console.log("✅ Favorites updated after removal!", updatedFavoritesString);
 
-      // Clear selected tiles after updating
-      setSelectedDocs([]);
-
-      // Update userFavorites so newly added items turn pink immediately
+      // Update UI
       setUserFavorites(updatedFavoritesArray);
+      setFavorites(favorites.filter((item) => !selectedDocs.includes(item.produce_doc)));
+      setSelectedDocs([]);
     } catch (error) {
-      console.error("❌ Error updating favorites:", error);
+      console.error("❌ Error removing favorites:", error);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Search</Text>
+      <Text style={styles.header}>Favorite Produce</Text>
 
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
-      ) : produce.length === 0 ? (
-        <Text style={styles.emptyMessage}>No produce items found.</Text>
+      ) : favorites.length === 0 ? (
+        <Text style={styles.emptyMessage}>You have no favorite produce items.</Text>
       ) : (
         <FlatList
-          data={produce}
+          data={favorites}
           keyExtractor={(item) => item.produce_doc}
           numColumns={Math.floor(width / TILE_SIZE)} // Adjust number of columns dynamically
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => {
-            const isFavorite = userFavorites.includes(item.produce_doc);
             const isSelected = selectedDocs.includes(item.produce_doc);
 
             return (
               <TouchableOpacity
                 style={[
                   styles.tile,
-                  isFavorite && styles.favoriteTile, // Light pink for favorites
-                  isSelected && styles.selectedTile, // Darker green for selections
+                  isSelected && styles.selectedTile, // Green background for selected tiles
                 ]}
                 onPress={() => toggleSelection(item.produce_doc)}
               >
@@ -169,10 +171,10 @@ const Search: React.FC = () => {
         />
       )}
 
-      {/* Sliding Update Favorites Button */}
+      {/* Sliding Remove Favorites Button */}
       <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
-        <TouchableOpacity style={styles.button} onPress={updateFavorites}>
-          <Text style={styles.buttonText}>Update Favorites ({selectedDocs.length})</Text>
+        <TouchableOpacity style={styles.button} onPress={removeFavorites}>
+          <Text style={styles.buttonText}>Remove Favorites ({selectedDocs.length})</Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
@@ -198,15 +200,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   tile: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#ffccd5", // Light pink background for user favorites
     padding: 10,
     margin: 5,
     borderRadius: 10,
     width: TILE_SIZE,
     alignItems: "center",
-  },
-  favoriteTile: {
-    backgroundColor: "#ffccd5", // Light pink background for user favorites
   },
   selectedTile: {
     backgroundColor: "#2d936c", // Green background for selected tiles
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   button: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#ff4444",
     padding: 10,
     borderRadius: 5,
     alignItems: "center",
@@ -251,4 +250,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Search;
+export default Favorites;

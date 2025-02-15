@@ -9,6 +9,7 @@ import Search from "./app/screens/Search";
 import Settings from "./app/screens/Settings";
 import LocationSettings from "./app/screens/LocationSettings";
 import Loading from "./app/screens/Loading";
+import Favorites from "./app/screens/Favorites";
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +52,11 @@ export default function App() {
             name="Loading"
             component={Loading}
             options={{ headerShown: false }}
+          />
+                    <Stack.Screen
+            name="Favorites"
+            component={Favorites}
+            options={{ headerShown: true }}
           />
       </Stack.Navigator>
     </NavigationContainer>

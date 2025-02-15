@@ -48,7 +48,7 @@ const Menu: React.FC = () => {
                 {/* Placeholder button for Favorites screen */}
                 <TouchableOpacity
                     style={styles.button}
-                    onPress={() => {}}
+                    onPress={() => navigation.navigate('Favorites')}
                 >
                     <Text style={styles.buttonText}>Favorites</Text>
                 </TouchableOpacity>
