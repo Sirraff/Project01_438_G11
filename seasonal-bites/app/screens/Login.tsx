@@ -1,37 +1,56 @@
 // app/screens/Login.tsx
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FIREBASE_AUTH } from '../../FirebaseConfig';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../utils/navigation';
 
-type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
+type RootStackParamList = {
+  Login: undefined;
+  CreateAccount: undefined;
+  Menu: undefined;
+  Search: undefined;
+  Settings: undefined;
+  LocationSettings: undefined;
+  Loading: undefined;
+  Favorites: undefined;
+};
 
-const Login = () => {
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
+const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-    // Type your navigation object.
-    const auth = FIREBASE_AUTH;
-    const navigation = useNavigation<LoginScreenNavigationProp>();
+  const navigation = useNavigation<LoginScreenNavigationProp>();
 
-    const signIn = async () => {
-        setLoading(true);
-        try {
-            const response = await signInWithEmailAndPassword(auth, email, password);
-            console.log('Login successful:', response);
-            navigation.navigate('Loading');    // Redirects to Loading screen
-        } catch (error) {
-            console.log(error);
-            setError(error.message);
-        } finally {
-            setLoading(false);
-        }
+  const signIn = async () => {
+    setLoading(true);
+    try {
+      const response = await signInWithEmailAndPassword(FIREBASE_AUTH, email, password);
+      const user = response.user;
+
+      if (!user.emailVerified) {
+        Alert.alert(
+          "Email Not Verified",
+          "Please verify your email before logging in. Check your inbox (and spam folder) for the verification email."
+        );
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Login successful:', response);
+      navigation.navigate('Loading'); // Navigate to your main screen
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
   return (
     <View style={styles.container}>
@@ -58,89 +77,50 @@ const Login = () => {
           onChangeText={setPassword}
         />
 
-                <TouchableOpacity 
-                    style={[styles.button, loading && styles.disabledButton]}
-                    onPress={signIn}
-                    disabled={loading}
-                >
-                    <Text style={styles.buttonText}>
-                        {loading ? 'Loading...' : 'Login'}
-                    </Text>
-                </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.button, loading && styles.disabledButton]}
+          onPress={signIn}
+          disabled={loading}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? 'Loading...' : 'Login'}
+          </Text>
+        </TouchableOpacity>
 
-                {/* Links user to Create Account page */}
-                <TouchableOpacity onPress={() => navigation.navigate('CreateAccount')}>
-                    <Text style={styles.footerText}>Don’t have an account? Sign up here.</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-    )
-}
+        {/* Debug log added here */}
+        <TouchableOpacity
+          onPress={() => {
+            console.log("Navigating to CreateAccount");
+            navigation.navigate('CreateAccount');
+          }}
+        >
+          <Text style={styles.footerText}>Don’t have an account? Sign up here.</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        padding: 20,
-        backgroundColor: '#f5f5f5'
-    },
-    formContainer: {
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-    },
-    title: {
-        fontSize: 36,
-        fontWeight: 'bold',
-        color: '#2d936c',
-        textAlign: 'center',
-        marginBottom: 10,
-    },
-    subtitle: {
-        fontSize: 18,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 40,
-    },
-    input: {
-        height: 50,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        paddingHorizontal: 15,
-        marginBottom: 20,
-        fontSize: 16,
-    },
-    button: {
-        backgroundColor: '#2d936c',
-        borderRadius: 8,
-        padding: 15,
-        alignItems: 'center',
-    },
-    disabledButton: {
-        backgroundColor: '#a0c1b6',
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: '600',
-    },
-    errorText: {
-        color: 'red',
-        marginBottom: 15,
-        textAlign: 'center',
-    },
-    footerText: {
-        color: '#2d936c',
-        fontSize: 14,
-        textAlign: 'center',
-        marginTop: 15,
-    },
+  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#f5f5f5' },
+  formContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  title: { fontSize: 36, fontWeight: 'bold', color: '#2d936c', textAlign: 'center', marginBottom: 10 },
+  subtitle: { fontSize: 18, color: '#666', textAlign: 'center', marginBottom: 40 },
+  input: { height: 50, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 15, marginBottom: 20, fontSize: 16 },
+  button: { backgroundColor: '#2d936c', borderRadius: 8, padding: 15, alignItems: 'center' },
+  disabledButton: { backgroundColor: '#a0c1b6' },
+  buttonText: { color: 'white', fontSize: 16, fontWeight: '600' },
+  errorText: { color: 'red', marginBottom: 15, textAlign: 'center' },
+  footerText: { color: '#2d936c', fontSize: 14, textAlign: 'center', marginTop: 15 },
 });
 
 export default Login;
