@@ -5,14 +5,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDDuDNNGIXTPovZo-sJvzEc2T3UyrTev2s",
-    authDomain: "seasonalbites-c7d26.firebaseapp.com",
-    databaseURL: "https://seasonalbites-c7d26-default-rtdb.firebaseio.com",
-    projectId: "seasonalbites-c7d26",
-    storageBucket: "seasonalbites-c7d26.firebasestorage.app",
-    messagingSenderId: "701729845184",
-    appId: "1:701729845184:web:015a8ad1013ac2dbf52225",
-    measurementId: "G-4WD6F8F0BJ"
+
   };
 
 // TODO: Add SDKs for Firebase products that you want to use
