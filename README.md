@@ -25,6 +25,7 @@ Seasonal Bites is a simple React Native app that helps users track their favorit
 * Communication was managed through Slack, in person meetings and Github issues/notifications.
 * There were initially around 12 stories but we ended up completing 19, mainly due story splitting
 * 19 issues were completed
+* Repo: https://github.com/Sirraff/Project01_438_G11
 
 ## 👥 Team Retrospective
 
