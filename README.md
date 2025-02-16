@@ -59,7 +59,7 @@ export const FIRESTORE_DB = getFirestore(app);
 ```
 4. **Run the App**
 ```bash
-npm expo start
+npx expo start
 ```
 
 ## 🤝 Contributing
