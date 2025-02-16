@@ -23,11 +23,15 @@ const Settings: React.FC = () => {
                 <Text style={styles.buttonText}>Set Location</Text>
             </TouchableOpacity>
 
-            <View
-                style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
-            >
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
                 <Text style={styles.text}>Dark Mode</Text>
                 <Switch value={isDarkMode} onValueChange={toggleTheme} />
+            </View>
+
+            {/* Placeholder */}
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                <Text style={styles.text}>Enable Notifications</Text>
+                <Switch/>
             </View>
         </View>
     );
