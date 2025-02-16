@@ -157,7 +157,7 @@ const Favorites: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Button title="Print All Users" onPress={printAllUsers} />
+      {/* <Button title="Print All Users" onPress={printAllUsers} /> */}   {/* for the debug stuff */}
       <Text style={styles.header}>Favorite Produce</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#2d936c" />
