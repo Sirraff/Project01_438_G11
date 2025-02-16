@@ -19,6 +19,49 @@ Seasonal Bites is a simple React Native app that helps users track their favorit
 - **State Management**: React Context API (or Redux if needed)  
 - **Local Storage**: AsyncStorage and SQLite(for user preferences and tracked fruits)  
 
+
+## Introduction
+
+* Communication was managed through Slack, in person meetings and Github issues/notifications.
+* There were initially around 12 stories but we ended up completing 19, mainly due story splitting
+* 19 issues were completed
+
+## Team Retrospective
+
+### Rafael L.S. Reis
+
+- [Pull Requests](https://github.com/Sirraff/Project01_438_G11/pulls?q=is%3Apr+is%3Aclosed+author%3ASirraff)
+- [Issues Resolved](https://github.com/Sirraff/Project01_438_G11/issues?q=is%3Aissue%20state%3Aclosed%20assignee%3ASirraff)
+
+#### What was your role / which stories did you work on?
+
+Raf primarily handled project setup, user authentication, and enhancements to existing features like the Search functionality and styling.
+
+- **What was the biggest challenge?**  
+  The biggest challenge was ensuring dependency compatibility.
+
+- **Why was it a challenge?**  
+  Some dependencies worked with React 18, while others required React 19, so synchronizing everything to run properly was tricky.
+
+- **How was the challenge addressed?**  
+  Since AI wasn't very helpful for these newer technologies, we relied on extensive documentation and numerous StackOverflow posts for solutions.
+
+- **Favorite / most interesting part of this project**  
+  The most interesting part was working with Firebase and creating our own APIs.
+
+- **If you could do it over, what would you change?**  
+  We would choose dependencies that fully align with the selected React version and start our testing process earlier.
+
+- **What is the most valuable thing you learned?**  
+  We adopted a "move fast and break things" approach, which initially worked but resulted in setbacks such as inadequate modularization, poor code quality, and increased technical debt.
+
+
+### Roberto Palacios
+
+### Ozzie Munoz
+
+### Chris Rensel-Smith
+
 ---
 
 ## 📥 Installation & Setup
