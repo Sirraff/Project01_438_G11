@@ -15,7 +15,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { getProduce } from "../database/FruitDatabase";
-import { getUserByName, updateUserFavorites } from "../database/UserDatabase";
+import { getUserByBaseId, updateUserFavorites } from "../database/UserDatabase";
 
 interface ProduceItem {
   id: number;
@@ -26,10 +26,12 @@ interface ProduceItem {
 }
 
 interface LocalUser {
-  user_id: number;
+  id: number;
   name_user: string;
   base_id: string;
   favorites: string;
+  last_login: Date;
+  location: string;
 }
 
 const { width } = Dimensions.get("window");
@@ -52,7 +54,7 @@ const Search: React.FC = () => {
       console.log("📜 Fetched Produce Data:", produceList);
       const currentUser = FIREBASE_AUTH.currentUser;
       if (currentUser) {
-        const localUser = await getUserByName(currentUser.email);
+        const localUser = await getUserByBaseId(currentUser.uid);
         if (localUser) {
           setLocalUserRecord(localUser);
           const favoritesString = localUser.favorites;
@@ -122,7 +124,7 @@ const Search: React.FC = () => {
       setSelectedDocs([]);
       setUserFavorites(updatedFavoritesArray);
       // Optionally, refresh the local user record if needed:
-      const updatedUser = await getUserByName(FIREBASE_AUTH.currentUser?.email || "");
+      const updatedUser = await getUserByBaseId(FIREBASE_AUTH.currentUser?.uid || "");
       if (updatedUser) {
         setLocalUserRecord(updatedUser);
       }

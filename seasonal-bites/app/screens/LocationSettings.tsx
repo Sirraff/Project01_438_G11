@@ -57,10 +57,10 @@ const LocationSettings: React.FC = () => {
             const userUID = currentUser.uid;
 
             // ✅ Step 2: Update the location in SQLite
-            const updateSuccess = await updateUserLocation(userUID, foundState.abbreviation);
+            const updateSuccess = await updateUserLocation(userUID, foundState.name);
 
             if (updateSuccess) {
-                console.log(`✅ Updated location for user ${userUID} to ${foundState.abbreviation}`);
+                console.log(`✅ Updated location for user ${userUID} to ${foundState.name}`);
                 // ✅ Step 3: Redirect only after successful update
                 navigation.replace("Menu");  
             } else {

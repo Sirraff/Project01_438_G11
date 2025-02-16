@@ -1,11 +1,11 @@
 export type RootStackParamList = {
     Menu: undefined;
-    Search: undefined;
-    TileSelector: undefined;
     CreateAccount: undefined;
     Login: undefined;
-    Settings: undefined;
     LocationSettings: undefined;
     Loading: undefined;
-    Favorites: undefined;
+    Search: { userData: { name_user: string; location: string; last_login: number; base_id: string } | null };
+    Favorites: { userData: { name_user: string; location: string; last_login: number; base_id: string } | null };
+    Settings: { userData: { name_user: string; location: string; last_login: number; base_id: string } | null };
+   
 };
