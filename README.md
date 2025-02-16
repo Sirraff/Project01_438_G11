@@ -37,7 +37,7 @@ Seasonal Bites is a simple React Native app that helps users track their favorit
 3. **Configure Firebase**
   - Create a Firebase project at Firebase Console.
   - Enable Firebase Authentication & Firestore.
-  - Copy your Firebase configuration into a file (e.g., FirebaseConfig.ts) in your project. For example:
+  - Copy your Firebase configuration into a file within the root(e.g., FirebaseConfig.ts) in your project. For example:
   ```bash
   // FirebaseConfig.ts
 import { initializeApp } from "firebase/app";
