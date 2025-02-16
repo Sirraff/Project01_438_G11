@@ -1,14 +1,27 @@
+// Favorites.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Animated, View, Text, FlatList, TouchableOpacity, Image, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import {
+  Animated,
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  Dimensions,
+  Button,
+} from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
-
 import { getProduce } from "../database/FruitDatabase";
-import { getUserFavorites, updateUserFavorites } from "../database/UserDatabase";
+import {
+  getUserByName,
+  getUserFavorites,
+  updateUserFavorites,
+  getUser,
+} from "../database/UserDatabase";
 
-/**
- * Defines an interface for items fetched from the database
- */
 interface ProduceItem {
   id: number;
   produce_doc: string;
@@ -17,52 +30,61 @@ interface ProduceItem {
   imageurl: string;
 }
 
-// Get screen dimensions
+interface LocalUser {
+  user_id: number;
+  name_user: string;
+  base_id: string;
+  favorites: string;
+}
+
 const { width } = Dimensions.get("window");
-const TILE_SIZE = width / 4 - 20; // Adjust tile size dynamically
+const TILE_SIZE = width / 4 - 20;
 
 const Favorites: React.FC = () => {
   const [favorites, setFavorites] = useState<ProduceItem[]>([]);
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
-  const [userUID, setUserUID] = useState<string | null>(null);
+  const [localUserRecord, setLocalUserRecord] = useState<LocalUser | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const slideAnim = useRef(new Animated.Value(100)).current;
 
   /**
-   * Fetch user's favorite produce
+   * Fetches the user's favorites from the local DB by first retrieving the user record by email.
    */
   const fetchFavorites = async () => {
     try {
       console.log("🔄 Fetching favorite produce from SQLite database...");
-      const auth = FIREBASE_AUTH;
-      const currentUser = auth.currentUser;
-
+      const currentUser = FIREBASE_AUTH.currentUser;
       if (!currentUser) {
         console.log("⚠️ No authenticated user.");
         setLoading(false);
         return;
       }
-
-      setUserUID(currentUser.uid);
-
-      // Fetch user favorites from the database
-      const favoritesString = await getUserFavorites(currentUser.uid);
-      if (!favoritesString) {
-        console.log("⚠️ No favorites found for this user.");
-        setFavorites([]);
+      // Retrieve the local user record using the email
+      const localUser = await getUserByName(currentUser.email);
+      if (!localUser) {
+        console.log("⚠️ No local user record found for", currentUser.email);
         setLoading(false);
         return;
       }
-
+      setLocalUserRecord(localUser);
+      console.log("Local user record:", localUser);
+      const favoritesString = localUser.favorites;
+      console.log("📖 Raw favorites string from database:", favoritesString);
+      if (!favoritesString || favoritesString.trim() === "") {
+        console.log("⚠️ No favorites found for this user.");
+        setFavorites([]);
+        setUserFavorites([]);
+        setLoading(false);
+        return;
+      }
       const favoritesArray = favoritesString.split(",").map((item) => item.trim());
       setUserFavorites(favoritesArray);
-
-      // Fetch full produce data and filter by user's favorites
       const produceList = await getProduce();
-      const filteredFavorites = produceList.filter((item) => favoritesArray.includes(item.produce_doc));
+      const filteredFavorites = produceList.filter((item) =>
+        favoritesArray.includes(item.produce_doc)
+      );
       setFavorites(filteredFavorites);
-
       console.log("✅ Loaded favorite produce:", filteredFavorites);
     } catch (error) {
       console.error("❌ Error fetching favorites:", error);
@@ -71,28 +93,31 @@ const Favorites: React.FC = () => {
     }
   };
 
-  // Refresh data when component is focused and clear selection when leaving
+  /**
+   * Debug function: prints all user rows from the DB.
+   */
+  // const printAllUsers = async () => {
+  //   const users = await getUser();
+  //   console.log("All user rows in the DB:", users);
+  // };
+
   useFocusEffect(
     useCallback(() => {
       fetchFavorites();
-
-      // Cleanup function: Clears selected items when the user navigates away
       return () => {
         setSelectedDocs([]);
       };
     }, [])
   );
 
-  // Toggles selection of produce_doc
   const toggleSelection = (produce_doc: string) => {
-    setSelectedDocs((prevSelected) =>
-      prevSelected.includes(produce_doc)
-        ? prevSelected.filter((doc) => doc !== produce_doc) // Remove if already selected
-        : [...prevSelected, produce_doc] // Add if not selected
+    setSelectedDocs((prev) =>
+      prev.includes(produce_doc)
+        ? prev.filter((doc) => doc !== produce_doc)
+        : [...prev, produce_doc]
     );
   };
 
-  // Sliding animation for the remove favorites button
   useEffect(() => {
     Animated.timing(slideAnim, {
       toValue: selectedDocs.length > 0 ? 0 : 100,
@@ -101,31 +126,30 @@ const Favorites: React.FC = () => {
     }).start();
   }, [selectedDocs]);
 
-  // Removes selected items from the user's favorites
+  /**
+   * Removes selected favorites. Uses the local user record's base_id.
+   */
   const removeFavorites = async () => {
-    if (!userUID) {
-      console.warn("⚠️ No user logged in, cannot remove favorites.");
+    if (!localUserRecord) {
+      console.warn("⚠️ No local user record found, cannot remove favorites.");
       return;
     }
-
     try {
-      console.log(`🔄 Removing selected favorites for user ${userUID}...`);
-
-      // Remove selected items from user's favorites
-      const updatedFavoritesArray = userFavorites.filter((doc) => !selectedDocs.includes(doc));
-
-      // Convert to comma-separated string
-      const updatedFavoritesString = updatedFavoritesArray.join(", ");
-
-      // Update the user's favorites in the database
-      await updateUserFavorites(userUID, updatedFavoritesString);
-
+      console.log(`🔄 Removing selected favorites for user ${localUserRecord.base_id}...`);
+      const updatedFavoritesArray = userFavorites.filter(
+        (doc) => !selectedDocs.includes(doc)
+      );
+      const updatedFavoritesString = updatedFavoritesArray.join(",");
+      await updateUserFavorites(localUserRecord.base_id, updatedFavoritesString);
       console.log("✅ Favorites updated after removal!", updatedFavoritesString);
-
-      // Update UI
       setUserFavorites(updatedFavoritesArray);
       setFavorites(favorites.filter((item) => !selectedDocs.includes(item.produce_doc)));
       setSelectedDocs([]);
+      // Optionally refresh local user record:
+      const updatedUser = await getUserByName(FIREBASE_AUTH.currentUser?.email || "");
+      if (updatedUser) {
+        setLocalUserRecord(updatedUser);
+      }
     } catch (error) {
       console.error("❌ Error removing favorites:", error);
     }
@@ -133,36 +157,30 @@ const Favorites: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      <Button title="Print All Users" onPress={printAllUsers} />
       <Text style={styles.header}>Favorite Produce</Text>
-
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#2d936c" />
       ) : favorites.length === 0 ? (
         <Text style={styles.emptyMessage}>You have no favorite produce items.</Text>
       ) : (
         <FlatList
           data={favorites}
           keyExtractor={(item) => item.produce_doc}
-          numColumns={Math.floor(width / TILE_SIZE)} // Adjust number of columns dynamically
+          numColumns={Math.floor(width / TILE_SIZE)}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => {
             const isSelected = selectedDocs.includes(item.produce_doc);
-
             return (
               <TouchableOpacity
                 style={[
                   styles.tile,
-                  isSelected && styles.selectedTile, // Green background for selected tiles
+                  isSelected && styles.selectedTile,
                 ]}
                 onPress={() => toggleSelection(item.produce_doc)}
               >
                 {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
-                <Text
-                  style={[
-                    styles.tileText,
-                    isSelected && styles.selectedText,
-                  ]}
-                >
+                <Text style={[styles.tileText, isSelected && styles.selectedText]}>
                   {item.name_produce || "Unnamed Item"}
                 </Text>
               </TouchableOpacity>
@@ -170,8 +188,6 @@ const Favorites: React.FC = () => {
           }}
         />
       )}
-
-      {/* Sliding Remove Favorites Button */}
       <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
         <TouchableOpacity style={styles.button} onPress={removeFavorites}>
           <Text style={styles.buttonText}>Remove Favorites ({selectedDocs.length})</Text>
@@ -181,7 +197,6 @@ const Favorites: React.FC = () => {
   );
 };
 
-// Stylesheets
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -200,7 +215,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   tile: {
-    backgroundColor: "#ffccd5", // Light pink background for user favorites
+    backgroundColor: "#ffccd5",
     padding: 10,
     margin: 5,
     borderRadius: 10,
@@ -208,7 +223,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedTile: {
-    backgroundColor: "#2d936c", // Green background for selected tiles
+    backgroundColor: "#2d936c",
     borderWidth: 2,
     borderColor: "#ffffff",
   },
