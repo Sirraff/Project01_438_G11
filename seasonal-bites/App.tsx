@@ -2,6 +2,8 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { LightTheme, CustomDarkTheme, useThemeToggle } from './app/utils/Themes';
+
 import Login from './app/screens/Login';
 import CreateAccount from './app/screens/CreateAccount';
 import Menu from './app/screens/Menu';
@@ -14,9 +16,20 @@ import Favorites from "./app/screens/Favorites";
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+    const { isDarkMode } = useThemeToggle();    // Get theme state
+    const theme = isDarkMode ? CustomDarkTheme : LightTheme;
+
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+    <NavigationContainer theme={theme}>
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: "#2d936c",
+          },
+            headerTintColor: "#ffffff",
+          }}
+      >
         <Stack.Screen
           name="Login"
           component={Login}
