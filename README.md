@@ -25,7 +25,7 @@ Seasonal Bites is a simple React Native app that helps users track their favorit
 
 1. **Clone the Repository**  
    ```bash
-   git clone https://github.com/yourusername/seasonal-bites.git
+   git clone https://github.com/Sirraff/Project01_438_G11.git
    cd seasonal-bites
    ```
 2. **Install Dependencies**
