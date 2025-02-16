@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FIREBASE_AUTH } from '../../FirebaseConfig';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { insertUniqueUser } from "../database/UserDatabase";
+import { insertUser } from "../database/UserDatabase";
 
 type RootStackParamList = {
   Login: undefined;
@@ -66,7 +66,7 @@ const CreateAccount: React.FC = () => {
       await sendEmailVerification(user);
       console.log("Verification email sent to:", user.email);
 
-      const success = await insertUniqueUser(email || "Email Missing", user.uid || "Missing UID", "");
+      const success = await insertUser(email || "Email Missing", user.uid || "Missing UID", "", new Date(), "");
       if (success) {
         console.log(`Successfully inserted '${email}' into database.`);
       } else {
