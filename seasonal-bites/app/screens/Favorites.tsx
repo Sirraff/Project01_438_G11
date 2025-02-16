@@ -93,14 +93,6 @@ const Favorites: React.FC = () => {
     }
   };
 
-  /**
-   * Debug function: prints all user rows from the DB.
-   */
-  // const printAllUsers = async () => {
-  //   const users = await getUser();
-  //   console.log("All user rows in the DB:", users);
-  // };
-
   useFocusEffect(
     useCallback(() => {
       fetchFavorites();
@@ -157,7 +149,6 @@ const Favorites: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* <Button title="Print All Users" onPress={printAllUsers} /> */}   {/* for the debug stuff */}
       <Text style={styles.header}>Favorite Produce</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#2d936c" />
@@ -173,15 +164,12 @@ const Favorites: React.FC = () => {
             const isSelected = selectedDocs.includes(item.produce_doc);
             return (
               <TouchableOpacity
-                style={[
-                  styles.tile,
-                  isSelected && styles.selectedTile,
-                ]}
+                style={[styles.tile, isSelected && styles.selectedTile]}
                 onPress={() => toggleSelection(item.produce_doc)}
               >
                 {item.imageurl && <Image source={{ uri: item.imageurl }} style={styles.image} />}
                 <Text style={[styles.tileText, isSelected && styles.selectedText]}>
-                  {item.name_produce || "Unnamed Item"}
+                  {item.name_produce ? item.name_produce.toString() : "Unnamed Item"}
                 </Text>
               </TouchableOpacity>
             );
@@ -190,7 +178,9 @@ const Favorites: React.FC = () => {
       )}
       <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
         <TouchableOpacity style={styles.button} onPress={removeFavorites}>
-          <Text style={styles.buttonText}>Remove Favorites ({selectedDocs.length})</Text>
+          <Text style={styles.buttonText}>
+            Remove Favorites ({String(selectedDocs.length)})
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>

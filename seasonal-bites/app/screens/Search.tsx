@@ -82,7 +82,6 @@ const Search: React.FC = () => {
     }, [])
   );
 
-  // Toggle selection for produce_doc
   const toggleSelection = (produce_doc: string) => {
     setSelectedDocs((prev) =>
       prev.includes(produce_doc)
@@ -99,7 +98,6 @@ const Search: React.FC = () => {
     }).start();
   }, [selectedDocs]);
 
-  // Updates the user's favorites by merging current favorites with newly selected items
   const updateFavorites = async () => {
     if (!localUserRecord) {
       console.warn("⚠️ No local user record, cannot update favorites.");
@@ -123,7 +121,7 @@ const Search: React.FC = () => {
       console.log("✅ Favorites updated successfully!");
       setSelectedDocs([]);
       setUserFavorites(updatedFavoritesArray);
-      // Optionally, refresh the local user record if needed
+      // Optionally, refresh the local user record if needed:
       const updatedUser = await getUserByName(FIREBASE_AUTH.currentUser?.email || "");
       if (updatedUser) {
         setLocalUserRecord(updatedUser);
@@ -140,7 +138,7 @@ const Search: React.FC = () => {
 
   return (
     <View style={styles.container}>
-   
+      <Text style={styles.header}>Search</Text>
       {/* Search Bar */}
       <TextInput
         style={styles.searchBar}
@@ -181,7 +179,9 @@ const Search: React.FC = () => {
       )}
       <Animated.View style={[styles.selectionButton, { transform: [{ translateY: slideAnim }] }]}>
         <TouchableOpacity style={styles.button} onPress={updateFavorites}>
-          <Text style={styles.buttonText}>Update Favorites ({selectedDocs.length})</Text>
+          <Text style={styles.buttonText}>
+            {"Update Favorites (" + selectedDocs.length.toString() + ")"}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     </View>
