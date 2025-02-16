@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from "../../FirebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { getProduce } from "../database/FruitDatabase";
 import {
   getUserByName,
@@ -41,6 +41,48 @@ interface LocalUser {
 const { width } = Dimensions.get("window");
 const TILE_SIZE = width / 4 - 20;
 
+/**
+ * Helper function to query Firestore for in‑season produce names.
+ * Expects that the document in the "States" collection for the given state
+ * has a field for the given month (e.g., "February") that is an array.
+ * Each element should be either a string like "Produce/asian_pears" or a DocumentReference.
+ * If it's a DocumentReference, its id will be used.
+ */
+const getInSeasonProduceForState = async (
+  state: string,
+  month: string
+): Promise<string[]> => {
+  try {
+    const stateDocRef = doc(FIRESTORE_DB, "States", state);
+    const stateDocSnap = await getDoc(stateDocRef);
+    if (stateDocSnap.exists()) {
+      const data = stateDocSnap.data();
+      console.log("Firestore document data for state", state, ":", data);
+      const monthData = data[month];
+      if (Array.isArray(monthData)) {
+        const inSeason = monthData.map((ref: any) => {
+          if (typeof ref === "string") {
+            return ref.split("/").pop() || "";
+          } else if (ref && typeof ref === "object" && ref.id) {
+            return ref.id;
+          } else {
+            return "";
+          }
+        }).filter((name) => name !== "");
+        console.log("Extracted in-season produce names for", month, ":", inSeason);
+        return inSeason;
+      } else {
+        console.log("Month data for", month, "is not an array:", monthData);
+      }
+    } else {
+      console.log(`No document found for state: ${state}`);
+    }
+  } catch (error) {
+    console.error("Error fetching in-season produce from Firestore:", error);
+  }
+  return [];
+};
+
 const Favorites: React.FC = () => {
   const [favorites, setFavorites] = useState<ProduceItem[]>([]);
   const [inSeasonFavorites, setInSeasonFavorites] = useState<ProduceItem[]>([]);
@@ -51,37 +93,14 @@ const Favorites: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const slideAnim = useRef(new Animated.Value(100)).current;
 
-  // Set the chosen state. You can later replace this with the user's actual chosen state.
+  // For this example, chosen state is hard-coded.
   const chosenState = "California";
-  // Get the current month as a full name (e.g., "February")
+  // Get current month name, e.g., "February"
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
 
   /**
-   * Queries Firestore for the in‑season produce for the given state and month.
-   * Assumes that the document in the "States" collection has a field named for the month,
-   * which is an array of strings like "Produce/Arugula".
-   */
-  const getInSeasonProduceForState = async (state: string, month: string): Promise<string[]> => {
-    try {
-      const stateDocRef = doc(FIRESTORE_DB, "States", state);
-      const stateDocSnap = await getDoc(stateDocRef);
-      if (stateDocSnap.exists()) {
-        const data = stateDocSnap.data();
-        const monthData = data[month];
-        if (Array.isArray(monthData)) {
-          // Extract produce names from references (e.g., "Produce/Arugula" becomes "Arugula")
-          return monthData.map((ref: string) => ref.split("/").pop() || "");
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching in-season produce from Firestore:", error);
-    }
-    return [];
-  };
-
-  /**
-   * Fetches the user's favorites from the local DB by first retrieving the user record by email,
-   * then filters the produce list into in‑season and out‑of‑season.
+   * Fetches the user's favorites from the local DB by retrieving the user record by email.
+   * Then loads full produce data from SQLite and separates favorites into in‑season and not in‑season.
    */
   const fetchFavorites = async () => {
     try {
@@ -114,9 +133,8 @@ const Favorites: React.FC = () => {
       }
       const favoritesArray = favoritesString.split(",").map((item) => item.trim());
       setUserFavorites(favoritesArray);
-      // Fetch full produce data from local DB
+      // Fetch full produce data from local SQLite DB
       const produceList = await getProduce();
-      // Filter produce that are in the user's favorites list
       const filteredFavorites = produceList.filter((item) =>
         favoritesArray.includes(item.produce_doc)
       );
@@ -169,7 +187,7 @@ const Favorites: React.FC = () => {
   }, [selectedDocs]);
 
   /**
-   * Removes selected favorites from the user's favorites.
+   * Removes selected favorites by updating the local user's favorites.
    */
   const removeFavorites = async () => {
     if (!localUserRecord) {
@@ -189,10 +207,13 @@ const Favorites: React.FC = () => {
         (item) => !selectedDocs.includes(item.produce_doc)
       );
       setFavorites(updatedAllFavorites);
-      // Also update in-season and out-of-season arrays
       const inSeasonNames = await getInSeasonProduceForState(chosenState, currentMonth);
-      setInSeasonFavorites(updatedAllFavorites.filter(item => inSeasonNames.includes(item.produce_doc)));
-      setOutOfSeasonFavorites(updatedAllFavorites.filter(item => !inSeasonNames.includes(item.produce_doc)));
+      setInSeasonFavorites(
+        updatedAllFavorites.filter((item) => inSeasonNames.includes(item.produce_doc))
+      );
+      setOutOfSeasonFavorites(
+        updatedAllFavorites.filter((item) => !inSeasonNames.includes(item.produce_doc))
+      );
       setSelectedDocs([]);
       // Optionally refresh local user record:
       const updatedUser = await getUserByName(FIREBASE_AUTH.currentUser?.email || "");
@@ -204,7 +225,7 @@ const Favorites: React.FC = () => {
     }
   };
 
-  // Render a tile for a produce item
+  // Render a produce tile
   const renderTile = ({ item }: { item: ProduceItem }) => {
     const isSelected = selectedDocs.includes(item.produce_doc);
     return (
@@ -222,17 +243,15 @@ const Favorites: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Favorite Produce</Text>
       {loading ? (
         <ActivityIndicator size="large" color="#2d936c" />
       ) : favorites.length === 0 ? (
         <Text style={styles.emptyMessage}>You have no favorite produce items.</Text>
       ) : (
         <View style={{ flex: 1, width: "100%" }}>
-          {/* In Season Favorites Section */}
           {inSeasonFavorites.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionHeader}>In Season Favorites</Text>
+              <Text style={styles.sectionHeader}>In Season</Text>
               <FlatList
                 data={inSeasonFavorites}
                 keyExtractor={(item) => item.produce_doc}
@@ -241,10 +260,9 @@ const Favorites: React.FC = () => {
               />
             </View>
           )}
-          {/* Not In Season Favorites Section */}
           {outOfSeasonFavorites.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionHeader}>Not In Season Favorites</Text>
+              <Text style={styles.sectionHeader}>Not In Season</Text>
               <FlatList
                 data={outOfSeasonFavorites}
                 keyExtractor={(item) => item.produce_doc}
@@ -269,14 +287,6 @@ const Favorites: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, alignItems: "center" },
   header: { fontSize: 24, fontWeight: "bold", textAlign: "center", marginBottom: 10, color: "#333" },
-  searchBar: {
-    width: "100%",
-    padding: 10,
-    borderRadius: 8,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    marginBottom: 15,
-  },
   section: { marginBottom: 20 },
   sectionHeader: { fontSize: 20, fontWeight: "bold", marginVertical: 10, color: "#333" },
   listContent: { justifyContent: "center", paddingBottom: 20 },
