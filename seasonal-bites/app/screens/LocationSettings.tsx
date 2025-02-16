@@ -1,47 +1,76 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { FIREBASE_AUTH } from "../../FirebaseConfig";
+import { updateUserLocation } from "../database/UserDatabase";
 import { stateData } from "../utils/locationStorage";
+import { RootStackParamList } from "../utils/navigation";
 
-// Allows users to input, save, and clear their state location
 const LocationSettings: React.FC = () => {
     const [stateInput, setStateInput] = useState("");
     const [location, setLocation] = useState<{ name: string; abbreviation: string } | null>(null);
     const [error, setError] = useState("");
+
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
     useEffect(() => {
         const loadLocation = async () => {
             const savedState = await AsyncStorage.getItem("selectedState");
             if (savedState) {
                 const foundState = Object.values(stateData).find(
-                    (state) => state.abbreviation === savedState || state.name.toLowerCase() === savedState.toLowerCase()
+                    (state) =>
+                        state.abbreviation.toLowerCase() === savedState.toLowerCase() ||
+                        state.name.toLowerCase() === savedState.toLowerCase()
                 );
                 if (foundState) {
                     setLocation(foundState);
-                    setStateInput(savedState);
+                    setStateInput(foundState.name); // ✅ Pre-fill input with state name
                 }
             }
         };
         loadLocation();
     }, []);
 
-    // Handles saving a valid state (name or abbreviation) and storing it in AsyncStorage
     const handleSaveLocation = async () => {
-        const upperInput = stateInput.toUpperCase();
+        const normalizedInput = stateInput.trim().toLowerCase();
         const foundState = Object.values(stateData).find(
-            (state) => state.abbreviation === upperInput || state.name.toLowerCase() === stateInput.toLowerCase()
+            (state) =>
+                state.abbreviation.toLowerCase() === normalizedInput || 
+                state.name.toLowerCase() === normalizedInput
         );
 
         if (foundState) {
             setLocation(foundState);
             await AsyncStorage.setItem("selectedState", foundState.abbreviation);
             setError("");
+
+            // ✅ Step 1: Get the current Firebase user's UID
+            const auth = FIREBASE_AUTH;
+            const currentUser = auth.currentUser;
+            if (!currentUser) {
+                setError("No logged-in user found.");
+                return;
+            }
+
+            const userUID = currentUser.uid;
+
+            // ✅ Step 2: Update the location in SQLite
+            const updateSuccess = await updateUserLocation(userUID, foundState.abbreviation);
+
+            if (updateSuccess) {
+                console.log(`✅ Updated location for user ${userUID} to ${foundState.abbreviation}`);
+                // ✅ Step 3: Redirect only after successful update
+                navigation.replace("Menu");  
+            } else {
+                setError("Failed to update location. Please try again.");
+            }
         } else {
             setError("Invalid state. Please enter a valid U.S. state name or abbreviation.");
         }
     };
 
-    // Clears the saved state
     const handleClearLocation = async () => {
         await AsyncStorage.removeItem("selectedState");
         setStateInput("");
@@ -97,11 +126,6 @@ const styles = StyleSheet.create({
         fontWeight: "bold",
         color: "#2d936c",
         marginBottom: 10,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: "#666",
-        marginBottom: 20,
     },
     input: {
         height: 50,
