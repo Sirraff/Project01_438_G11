@@ -61,6 +61,34 @@ Raf primarily handled project setup, user authentication, and enhancements to ex
 
 ### Ozzie Munoz
 
+- [Pull Requests](https://github.com/Sirraff/Project01_438_G11/pulls?q=is%3Apr+is%3Aclosed+author%3AOzzieMunoz)
+- [Issues Resolved](https://github.com/Sirraff/Project01_438_G11/issues?q=is%3Aissue%20state%3Aclosed%20assignee%3AOzzieMunoz)
+
+#### What was your role / which stories did you work on?
+
+Focused on building core functionality for the app like Create Account, Navigation, and User Settings. 
+
+- **What was the biggest challenge?**  
+  The biggest challenge was ensuring Dark Mode persisted globally and updated in real time across all screens.
+  
+- **Why was it a challenge?**
+  Initially, each screen handled the theme independently, meaning when a user toggled dark mode in the Settings page, the change wasn't refeclted across other screens. 
+
+- **How was the challenge addressed?**  
+  It wasn't.
+
+  At least not yet due to time constraints. 
+
+- **Favorite / most interesting part of this project**
+  The most interesting part was adding user preferences and making the app more interactive for the user. 
+
+- **If you could do it over, what would you change?**
+  Organize and clean up the styles earlier in the development process to avoid a major refactor at the end.
+  
+- **What is the most valuable thing you learned?**  
+  The importance of setting up a clean and organized structure from the beginning to save time and prevent unnecessary rework.
+
+
 ### Chris Rensel-Smith
 
 ---
