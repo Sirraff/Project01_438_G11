@@ -57,7 +57,7 @@ Raf primarily handled project setup, user authentication, and enhancements to ex
   We adopted a "move fast and break things" approach, which initially worked but resulted in setbacks such as inadequate modularization, poor code quality, and increased technical debt.
 
 
-### [Roberto Palacios](https://github.com/RPalaciosDev?tab=overview&from=2025-02-01&to=2025-02-16)
+### [Roberto Palacios](https://github.com/RPalaciosDev)
 + [Pull Requests](https://github.com/Sirraff/Project01_438_G11/pulls?q=is%3Apr+is%3Aclosed+author%3ARPalaciosDev)
 
 + [Issues Resolved](https://github.com/Sirraff/Project01_438_G11/issues?q=is%3Aissue%20state%3Aclosed%20assignee%3ARPalaciosDev)
