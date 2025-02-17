@@ -172,5 +172,6 @@ npx expo start
 - Commit your changes.
 - Push to the branch.
 - Create a new Pull Request.
-   
+
+---
 [MIT License](https://github.com/Sirraff/Project01_438_G11/edit/main/LICENSE)
