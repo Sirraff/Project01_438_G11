@@ -17,7 +17,7 @@ import { FIREBASE_AUTH, FIRESTORE_DB } from "../../FirebaseConfig";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { getProduce } from "../database/FruitDatabase";
 import {
-  getUserByName,
+  getUserByBaseId,
   getUserFavorites,
   updateUserFavorites,
   getUser,
@@ -32,10 +32,12 @@ interface ProduceItem {
 }
 
 interface LocalUser {
-  user_id: number;
+  id: number;
   name_user: string;
   base_id: string;
   favorites: string;
+  last_login: Date;
+  location: string;
 }
 
 const { width } = Dimensions.get("window");
@@ -112,7 +114,7 @@ const Favorites: React.FC = () => {
         return;
       }
       // Retrieve the local user record using the email
-      const localUser = await getUserByName(currentUser.email);
+      const localUser = await getUserByBaseId(currentUser.uid);
       if (!localUser) {
         console.log("⚠️ No local user record found for", currentUser.email);
         setLoading(false);
@@ -216,7 +218,7 @@ const Favorites: React.FC = () => {
       );
       setSelectedDocs([]);
       // Optionally refresh local user record:
-      const updatedUser = await getUserByName(FIREBASE_AUTH.currentUser?.email || "");
+      const updatedUser = await getUserByBaseId(FIREBASE_AUTH.currentUser?.email || "");
       if (updatedUser) {
         setLocalUserRecord(updatedUser);
       }
