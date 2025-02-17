@@ -60,7 +60,7 @@ Raf primarily handled project setup, user authentication, and enhancements to ex
 ### Roberto Palacios
 + [Pull Requests](https://github.com/Sirraff/Project01_438_G11/pulls?q=is%3Apr+is%3Aclosed+author%3ARPalaciosDev)
 
-+ [Issues](https://github.com/Sirraff/Project01_438_G11/issues?q=is%3Aissue%20state%3Aclosed%20assignee%3ARPalaciosDev)
++ [Issues Resolved](https://github.com/Sirraff/Project01_438_G11/issues?q=is%3Aissue%20state%3Aclosed%20assignee%3ARPalaciosDev)
 
 #### What was your role / which stories did you work on
 My main job was database managment both of our local SQLite database and our Firebase Firestore. This included designing these systems and setting up the pages that made the most use of these resources. 
