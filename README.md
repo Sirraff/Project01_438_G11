@@ -58,7 +58,26 @@ Raf primarily handled project setup, user authentication, and enhancements to ex
 
 
 ### Roberto Palacios
++ [Pull Requests](https://github.com/Sirraff/Project01_438_G11/pulls?q=is%3Apr+is%3Aclosed+author%3ARPalaciosDev)
 
++ [Issues](https://github.com/Sirraff/Project01_438_G11/issues?q=is%3Aissue%20state%3Aclosed%20assignee%3ARPalaciosDev)
+
+#### What was your role / which stories did you work on
+My main job was database managment both of our local SQLite database and our Firebase Firestore. This included designing these systems and setting up the pages that made the most use of these resources. 
+
++ What was the biggest challenge? 
+  + My biggest challenge was designing the databases and retrieving information.
++ Why was it a challenge?
+  + We didn't have tools or tests to help us figure out what was going on with our databases. 
++ How was the challenge addressed?
+  + We spammed console logs until we were able to find the source of our errors or we asked AI to point us in the right direction.
++ Favorite / most interesting part of this project
+  + Before this, I was a bit scared of Firebase and now it's deeply integrated into our app.
++ If you could do it over, what would you change?
+  + I would probably use a ready-made API and spend more time during our planing phases.
++ What is the most valuable thing you learned?
+  + Git is your friend* when it comes to saving your hide when things go south. (*until it's not)
+    
 ### Ozzie Munoz
 
 - [Pull Requests](https://github.com/Sirraff/Project01_438_G11/pulls?q=is%3Apr+is%3Aclosed+author%3AOzzieMunoz)
