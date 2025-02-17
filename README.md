@@ -114,13 +114,13 @@ Focused on building core functionality for the app like Create Account, Navigati
 ## ✨ Conclusion
 
 - **How successful was the project?**  
-  We set out to create a user-friendly app for tracking seasonal produce, delivering on key features like user authentication, region-based availability, local storage, and our own API. The only stretch goal not fully implemented was the user notification system for produce going into season, though most of the groundwork is done aside from the cloud email integration. Overall, we went beoynd the essential scope.
+  We set out to create a user-friendly app for tracking seasonal produce, delivering on key features like user authentication, region-based availability, local storage, and our own API. The only stretch goal not fully implemented was the user email notification system for produce going into season, though most of the groundwork is done aside from the cloud email integration. Overall, we went beoynd the essential scope.
 
 - **What was the largest victory?**  
   Our biggest triumph was integrating Firebase smoothly amid complex dependencies, ensuring reliable user authentication and efficient data fetching.
 
 - **Final assessment of the project**  
-  The project effectively demonstrates the main functionality needed to track seasonal produce. As of now, it’s a solid MVP for Android. Additional testing, polish, and completion of the notification system would be needed before a full deployment.
+  The project effectively demonstrates the main functionality needed to track seasonal produce. As of now, it’s a solid MVP for Android. Additional testing, polish, and completion of the email notification system would be needed before a full deployment.
 
 ---
 
