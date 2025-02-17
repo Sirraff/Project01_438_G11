@@ -22,6 +22,8 @@ const Loading: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [produceList, setProduceList] = useState<ProduceItem[]>([]);
     const [databaseStatus, setDatabaseStatus] = useState<string>("Checking database...");
+    const [redirectToLocationSettings, setRedirectToLocationSettings] = useState(false);
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,10 +46,18 @@ const Loading: React.FC = () => {
 
                 if (!localUser) {
                     console.log("🆕 User not found in local database. Inserting...");
-                    await insertUser(userEmail, userUID, ""); // Insert user with empty favorites
-                    console.log("✅ User successfully added to local database.");
+                    const inserted = await insertUser(userEmail, userUID, "", new Date(), "");
+                    if (inserted) {
+                        console.log("✅ User successfully added to local database.");
+                        setRedirectToLocationSettings(true);
+                    }
                 } else {
                     console.log("✔️ User already exists in local database.");
+                    // Check if location is missing
+                    if (!localUser.location || localUser.location.trim() === "") {
+                        console.warn("⚠️ User has no stored location. Redirecting...");
+                        setRedirectToLocationSettings(true);
+                    }
                 }
 
                 console.log("🔄 Fetching data from Firestore...");
@@ -71,7 +81,7 @@ const Loading: React.FC = () => {
             }
         };
 
-        fetchData(); // ✅ Now correctly inside useEffect
+        fetchData();
     }, []);
 
     // Download images and insert into DB with detailed logging
@@ -86,13 +96,9 @@ const Loading: React.FC = () => {
                         const fileInfo = await FileSystem.getInfoAsync(localUri);
 
                         if (!fileInfo.exists) {
-                            console.log(`⬇️ Downloading image for '${item.name || "Unnamed"}'...`);
                             await FileSystem.downloadAsync(item.imageurl, localUri);
-                        } else {
-                            console.log(`📂 Image already exists locally for '${item.name}'. Skipping download.`);
                         }
 
-                        console.log(`🔍 Attempting to insert '${item.name}' into SQLite...`);
                         const success = await insertUniqueProduce(
                             item.id || "ID Missing",
                             item.name || "Unnamed",
@@ -100,11 +106,6 @@ const Loading: React.FC = () => {
                             localUri
                         );
 
-                        if (success) {
-                            console.log(`✅ Successfully inserted '${item.name}' into database.`);
-                        } else {
-                            console.log(`⚠️ Skipped duplicate '${item.name}'.`);
-                        }
                     } catch (error) {
                         console.error(`❌ Error processing '${item.name}':`, error);
                     }
@@ -140,9 +141,14 @@ const Loading: React.FC = () => {
     // Redirect when loading is finished
     useEffect(() => {
         if (!loading) {
-            navigation.replace("Menu");
+            if (redirectToLocationSettings) {
+                navigation.replace("LocationSettings"); // Redirect to location settings if missing
+            } else {
+                navigation.replace("Menu"); // Otherwise, go to the menu
+            }
         }
-    }, [loading, navigation]);
+    }, [loading, redirectToLocationSettings, navigation]);
+    
 
     return (
         <View style={styles.container}>

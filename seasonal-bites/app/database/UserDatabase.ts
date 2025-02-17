@@ -6,6 +6,8 @@ interface FullUser {
   name_user: string;
   base_id: string;
   favorites: string;
+  last_login: Date;
+  location: string;
 }
 
 // Global variable to store the database instance
@@ -20,16 +22,19 @@ const openDatabase = async () => {
   return dbInstance;
 };
 
-// Creates the table only once
+// Creates the table only once with last_login as an INTEGER (Unix Timestamp)
 const initializeDB = async () => {
   const db = await openDatabase();
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS users (
       user_id INTEGER PRIMARY KEY AUTOINCREMENT,
       name_user TEXT UNIQUE,
-      base_id TEXT,
-      favorites TEXT
+      base_id TEXT UNIQUE,
+      favorites TEXT,
+      last_login INTEGER,  -- Store as Unix Timestamp
+      location TEXT
     );
+    CREATE INDEX IF NOT EXISTS idx_base_id ON users(base_id);
   `;
   await db.execAsync(createTableQuery);
   console.log('✅ Table created (or already exists)');
@@ -40,35 +45,34 @@ const getDatabase = async () => {
   return dbInstance!;
 };
 
-// Inserts user **without checking for duplicates**
-// Using INSERT OR IGNORE so duplicates don’t cause errors.
-const insertUser = async (name_user: string, base_id: string, favorites: string) => {
-  const db = await getDatabase();
-  const insertQuery = 'INSERT OR IGNORE INTO users (name_user, base_id, favorites) VALUES (?, ?, ?)';
-  await db.runAsync(insertQuery, [name_user, base_id, favorites]);
-  console.log(`✅ User ${name_user} added successfully (or already exists)`);
-};
-
-// Inserts user **only if it doesn't exist**
-const insertUniqueUser = async (name_user: string, base_id: string, favorites: string) => {
-  const db = await getDatabase();
+// Inserts user with last_login as a timestamp
+const insertUser = async (
+  name_user: string,
+  base_id: string,
+  favorites: string,
+  last_login: Date,
+  location: string
+): Promise<boolean> => {
   try {
-    console.log(`🔍 Checking if '${name_user}' already exists in database...`);
-    const checkQuery = "SELECT COUNT(*) AS count FROM users WHERE name_user = ?";
-    const result = await db.getFirstAsync(checkQuery, [name_user]) as { count: number } | undefined;
-    console.log(`📊 Found count for '${name_user}':`, result?.count ?? "Unknown");
-    if (result && result.count > 0) {
-      console.log(`⚠️ Skipped '${name_user}', already exists.`);
-      return false; // Prevent duplicate insert
+    const db = await getDatabase();
+    const insertQuery =
+      'INSERT OR IGNORE INTO users (name_user, base_id, favorites, last_login, location) VALUES (?, ?, ?, ?, ?)';
+    
+    const result = await db.runAsync(insertQuery, [name_user, base_id, favorites, last_login.getTime(), location]);
+
+    if (result.changes && result.changes > 0) {
+      console.log(`✅ User ${name_user} added successfully.`);
+      return true; // User was inserted successfully
+    } else {
+      console.log(`⚠️ User ${name_user} already exists, no new record inserted.`);
+      return false; // User was ignored (already exists)
     }
-    const insertQuery = "INSERT INTO users (name_user, base_id, favorites) VALUES (?, ?, ?)";
-    await db.runAsync(insertQuery, [name_user, base_id, favorites]);
-    console.log(`✅ Successfully inserted: '${name_user}' into database.`);
-    return true;
   } catch (error) {
-    console.error(`❌ Error inserting '${name_user}':`, error);
+    console.error(`❌ Error inserting user ${name_user}:`, error);
+    return false; // Return false in case of error
   }
 };
+
 
 // Retrieves all users with enhanced logging
 const getUser = async (): Promise<FullUser[]> => {
@@ -76,10 +80,10 @@ const getUser = async (): Promise<FullUser[]> => {
   const db = await getDatabase();
   const selectQuery = 'SELECT * FROM users';
   const result = await db.getAllAsync(selectQuery) as FullUser[];
-  console.log(`📜 Retrieved ${result.length} user items:`);
-  result.forEach((item: FullUser, index: number) => {
-    console.log(`${index + 1}. id: ${item.id}, name: ${item.name_user}, base_id: ${item.base_id}, favorites: ${item.favorites}`);
+  result.forEach((item: FullUser) => {
+    item.last_login = new Date(item.last_login); // Convert timestamp to Date
   });
+  console.log(`📜 Retrieved ${result.length} user items.`);
   return result;
 };
 
@@ -88,7 +92,7 @@ const getUserByName = async (name_user: string): Promise<FullUser | null> => {
   const db = await getDatabase();
   const selectQuery = 'SELECT * FROM users WHERE name_user = ? LIMIT 1';
   const result = await db.getFirstAsync(selectQuery, [name_user]) as FullUser | undefined;
-  return result || null;
+  return result ? { ...result, last_login: new Date(result.last_login) } : null;
 };
 
 // Retrieves user by base_id
@@ -96,7 +100,7 @@ const getUserByBaseId = async (base_id: string): Promise<FullUser | null> => {
   const db = await getDatabase();
   const selectQuery = 'SELECT * FROM users WHERE base_id = ? LIMIT 1';
   const result = await db.getFirstAsync(selectQuery, [base_id]) as FullUser | undefined;
-  return result || null;
+  return result ? { ...result, last_login: new Date(result.last_login) } : null;
 };
 
 // Updates the user's favorites
@@ -105,10 +109,7 @@ const updateUserFavorites = async (base_id: string, favorites: string) => {
   try {
     const updateQuery = "UPDATE users SET favorites = ? WHERE base_id = ?";
     await db.runAsync(updateQuery, [favorites, base_id]);
-    console.log(`✅ Successfully updated favorites for user with base_id: ${base_id}`);
-    // Optionally, print the updated row:
-    const updatedUser = await getUserByBaseId(base_id);
-    console.log("📝 Updated user row:", updatedUser);
+    console.log(`✅ Successfully updated favorites for base_id: ${base_id}`);
     return true;
   } catch (error) {
     console.error(`❌ Error updating favorites for base_id: ${base_id}`, error);
@@ -122,16 +123,64 @@ const getUserFavorites = async (base_id: string): Promise<string | null> => {
   try {
     const selectQuery = "SELECT favorites FROM users WHERE base_id = ? LIMIT 1";
     const result = await db.getFirstAsync(selectQuery, [base_id]) as { favorites: string } | undefined;
-    if (result && result.favorites !== null) {
-      console.log(`✅ Successfully retrieved favorites for base_id: ${base_id} -> "${result.favorites}"`);
-      return result.favorites;
-    } else {
-      console.log(`⚠️ No favorites found for base_id: ${base_id}`);
-      return null;
-    }
+    return result?.favorites || null;
   } catch (error) {
     console.error(`❌ Error retrieving favorites for base_id: ${base_id}`, error);
     return null;
+  }
+};
+
+// Retrieves the user's location
+const getUserLocation = async (base_id: string): Promise<string | null> => {
+  const db = await getDatabase();
+  try {
+    const selectQuery = "SELECT location FROM users WHERE base_id = ? LIMIT 1";
+    const result = await db.getFirstAsync(selectQuery, [base_id]) as { location: string } | undefined;
+    return result?.location || null;
+  } catch (error) {
+    console.error(`❌ Error retrieving location for base_id: ${base_id}`, error);
+    return null;
+  }
+};
+
+// Updates the user's location
+const updateUserLocation = async (base_id: string, location: string) => {
+  const db = await getDatabase();
+  try {
+    const updateQuery = "UPDATE users SET location = ? WHERE base_id = ?";
+    await db.runAsync(updateQuery, [location, base_id]);
+    console.log(`✅ Successfully updated location for base_id: ${base_id}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Error updating location for base_id: ${base_id}`, error);
+    return false;
+  }
+};
+
+// Retrieves the user's last login as a Date object
+const getUserLastLogin = async (base_id: string): Promise<Date | null> => {
+  const db = await getDatabase();
+  try {
+    const selectQuery = "SELECT last_login FROM users WHERE base_id = ? LIMIT 1";
+    const result = await db.getFirstAsync(selectQuery, [base_id]) as { last_login: number } | undefined;
+    return result ? new Date(result.last_login) : null;
+  } catch (error) {
+    console.error(`❌ Error retrieving last login for base_id: ${base_id}`, error);
+    return null;
+  }
+};
+
+// Updates the user's last login, storing the date as a timestamp
+const updateUserLastLogin = async (base_id: string, last_login: Date) => {
+  const db = await getDatabase();
+  try {
+    const updateQuery = "UPDATE users SET last_login = ? WHERE base_id = ?";
+    await db.runAsync(updateQuery, [last_login.getTime(), base_id]);
+    console.log(`✅ Successfully updated last login for base_id: ${base_id}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Error updating last login for base_id: ${base_id}`, error);
+    return false;
   }
 };
 
@@ -139,9 +188,12 @@ const getUserFavorites = async (base_id: string): Promise<string | null> => {
 export {
   insertUser,
   getUser,
-  insertUniqueUser,
   getUserByName,
   getUserByBaseId,
   updateUserFavorites,
   getUserFavorites,
+  getUserLocation,
+  updateUserLocation,
+  getUserLastLogin,
+  updateUserLastLogin
 };
