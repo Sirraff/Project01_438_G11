@@ -134,7 +134,7 @@ const Menu: React.FC = () => {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>🌿 Produce Update</Text>
+                        <Text style={styles.modalTitle}>Produce Update</Text>
 
                         {/* Show what was newly added this month */}
                         {newProduce.length > 0 && (
