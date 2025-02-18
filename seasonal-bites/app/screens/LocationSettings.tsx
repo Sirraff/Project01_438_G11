@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import {View, Text, TextInput, TouchableOpacity, StyleSheet, Button} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -7,13 +7,34 @@ import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { updateUserLocation } from "../database/UserDatabase";
 import { stateData } from "../utils/locationStorage";
 import { RootStackParamList } from "../utils/navigation";
+import {StackNavigationProp} from "@react-navigation/stack";
+import {signOut} from "firebase/auth";
+
+type LocationScreenNavigationProp = StackNavigationProp<RootStackParamList, 'LocationSettings'>;
 
 const LocationSettings: React.FC = () => {
+    const navigation = useNavigation<LocationScreenNavigationProp>();
     const [stateInput, setStateInput] = useState("");
     const [location, setLocation] = useState<{ name: string; abbreviation: string } | null>(null);
     const [error, setError] = useState("");
 
-    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    // Function to handle user logout
+    const handleLogout = async () => {
+        try {
+            await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+            navigation.navigate('Login');   // Redirects to Login screen
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
+    };
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+            ),
+        });
+    }, [navigation]);
 
     useEffect(() => {
         const loadLocation = async () => {

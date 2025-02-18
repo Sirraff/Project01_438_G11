@@ -6,6 +6,8 @@ import { RootStackParamList } from '../utils/navigation';
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../FirebaseConfig';
 import { getUserByBaseId, updateUserLastLogin } from "../database/UserDatabase";
 import { collection, doc, getDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import { Button } from "react-native";
 
 type MenuScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Menu'>;
 
@@ -16,6 +18,24 @@ const Menu: React.FC = () => {
     const [removedProduce, setRemovedProduce] = useState<string[]>([]);
     const [newProduce, setNewProduce] = useState<string[]>([]);
     const [modalVisible, setModalVisible] = useState(false);
+
+    // Function to handle user logout
+    const handleLogout = async () => {
+        try {
+            await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+            navigation.navigate('Login');   // Redirects to Login screen
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
+    };
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+            ),
+        });
+    }, [navigation]);
 
     // Fetch produce data for a given month
     const getProduceForMonth = async (state: string, month: number) => {
@@ -235,7 +255,16 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         paddingHorizontal: 20,
         borderRadius: 8
-    }
+    },
+    button: {
+        backgroundColor: '#2d936c',
+        borderRadius: 8,
+        paddingVertical: 12,
+        paddingHorizontal: 40,
+        marginVertical: 5,
+        width: '80%',
+        alignItems: 'center',
+    },
 });
 
 

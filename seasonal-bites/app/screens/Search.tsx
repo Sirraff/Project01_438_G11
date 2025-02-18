@@ -10,12 +10,18 @@ import {
   StyleSheet,
   ActivityIndicator,
   Dimensions,
-  TextInput,
+  TextInput, Button,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
 import { getProduce } from "../database/FruitDatabase";
 import { getUserByBaseId, updateUserFavorites } from "../database/UserDatabase";
+import { signOut } from "firebase/auth";
+import { useNavigation } from "@react-navigation/native";
+import {StackNavigationProp} from "@react-navigation/stack";
+import {RootStackParamList} from "../utils/navigation";
+
+type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Search'>;
 
 interface ProduceItem {
   id: number;
@@ -45,6 +51,25 @@ const Search: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const slideAnim = useRef(new Animated.Value(100)).current;
+  const navigation = useNavigation<SearchScreenNavigationProp>();
+
+  // Function to handle user logout
+  const handleLogout = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+      navigation.navigate('Login');   // Redirects to Login screen
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+          <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+      ),
+    });
+  }, [navigation]);
 
   const fetchData = async () => {
     try {

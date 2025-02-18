@@ -9,12 +9,16 @@ import {
   StyleSheet,
   ActivityIndicator,
   Dimensions,
-  Animated,
+  Animated, Button,
 } from "react-native";
 import { FIREBASE_AUTH, FIRESTORE_DB } from '../../FirebaseConfig';
 import { collection, doc, getDoc } from "firebase/firestore";
 import { getProduceByDoc } from "../database/FruitDatabase";
 import { getUserFavorites, getUserLocation, updateUserFavorites } from "../database/UserDatabase";
+import {signOut} from "firebase/auth";
+import {useNavigation} from "@react-navigation/native";
+import {StackNavigationProp} from "@react-navigation/stack";
+import {RootStackParamList} from "../utils/navigation";
 
 interface ProduceItem {
   id: number;
@@ -27,12 +31,33 @@ interface ProduceItem {
 const { width } = Dimensions.get("window");
 const TILE_SIZE = width / 4 - 20;
 
+type FavoritesScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Favorites'>;
+
 const Favorites: React.FC = () => {
+  const navigation = useNavigation<FavoritesScreenNavigationProp>();
   const [favoriteProduce, setFavoriteProduce] = useState<ProduceItem[]>([]);
   const [selectedToRemove, setSelectedToRemove] = useState<string[]>([]);
   const [inSeasonProduce, setInSeasonProduce] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const slideAnim = useState(new Animated.Value(100))[0];
+
+  // Function to handle user logout
+  const handleLogout = async () => {
+    try {
+      await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+      navigation.navigate('Login');   // Redirects to Login screen
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+          <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+      ),
+    });
+  }, [navigation]);
 
      // Fetch produce data for a given month
       const getProduceForMonth = async (state: string, month: number) => {

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, Switch } from "react-native";
+import {View, Text, TouchableOpacity, Switch, Button} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../utils/navigation";
 import { getThemeStyles, useThemeToggle } from "../utils/Themes";
 import { FIREBASE_AUTH } from "../../FirebaseConfig";
-import { updateUserLastLogin } from "../database/UserDatabase"; // Ensure correct path
+import { updateUserLastLogin } from "../database/UserDatabase";
+import {signOut} from "firebase/auth"; // Ensure correct path
 
 type SettingsScreenNavigationProp = StackNavigationProp<RootStackParamList, "Settings">;
 
@@ -15,6 +16,24 @@ const Settings: React.FC = () => {
     const { isDarkMode, toggleTheme } = useThemeToggle();
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const styles = getThemeStyles(isDarkMode);
+
+    // Function to handle user logout
+    const handleLogout = async () => {
+        try {
+            await signOut(FIREBASE_AUTH);   // Signs out from Firebase auth
+            navigation.navigate('Login');   // Redirects to Login screen
+        } catch (error) {
+            console.error("Logout Error:", error);
+        }
+    };
+
+    useEffect(() => {
+        navigation.setOptions({
+            headerRight: () => (
+                <Button title="Logout" onPress={handleLogout} color="#2d936c" />
+            ),
+        });
+    }, [navigation]);
 
     useEffect(() => {
         const loadNotificationsSetting = async () => {
